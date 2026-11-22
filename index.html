@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dawnie</title>
+<meta name="description" content="Longboard dawn-patrol forecast for the Sunshine Coast and Gold Coast.">
+<meta name="theme-color" content="#06090c">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dawnie">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
+<link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+<link rel="preconnect" href="https://www.data.qld.gov.au" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<main id="home" class="view">
+  <header class="top">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="17" r="6.5" fill="currentColor" opacity=".9"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="var(--bg)" stroke-width="3.6"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6M2 26c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div>
+        <h1>Dawnie</h1>
+        <p class="sub" id="updated">Loading the lineup…</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="refresh" aria-label="Refresh forecast">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </header>
+
+  <div class="region" role="tablist" aria-label="Region">
+    <button role="tab" data-region="sc">Sunshine Coast</button>
+    <button role="tab" data-region="gc">Gold Coast</button>
+    <span class="region-pill" aria-hidden="true"></span>
+  </div>
+
+  <nav class="days" id="days" aria-label="Morning"></nav>
+
+  <section id="hero" class="hero" aria-live="polite"></section>
+
+  <section class="block">
+    <div class="block-head"><h2>The lineup</h2><span class="block-meta" id="window-meta"></span></div>
+    <ol id="ranking" class="ranking"></ol>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Buoy check</h2><span class="block-meta">Live vs forecast</span></div>
+    <div id="buoys" class="buoys"></div>
+  </section>
+
+  <footer class="foot">
+    <ul id="sources" class="sources"></ul>
+    <p>Forecast is a model, not a promise — always check it with your own eyes. Tides are Maritime Safety Queensland predictions (metres above lowest astronomical tide). Times are Brisbane (AEST).</p>
+  </footer>
+</main>
+
+<main id="detail" class="view" hidden></main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
