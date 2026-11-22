@@ -1,6 +1,6 @@
 {
-  "name": "Dawnie — Longboard Forecast",
-  "short_name": "Dawnie",
+  "name": "Surf Cowabunga — Longboard Forecast",
+  "short_name": "Cowabunga",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
