@@ -70,7 +70,7 @@
     const pts = [...C.spots, ...C.buoys];
     return getJSON('https://marine-api.open-meteo.com/v1/marine'
       + `?latitude=${pts.map((p) => p.lat).join(',')}&longitude=${pts.map((p) => p.lon).join(',')}`
-      + `&hourly=${MARINE_VARS}&timezone=Australia%2FBrisbane&past_days=1&forecast_days=7&cell_selection=sea`);
+      + `&hourly=${MARINE_VARS}&timezone=Australia%2FBrisbane&past_days=1&forecast_days=${C.outlook.days}&cell_selection=sea`);
   }
 
   function fetchWind() {
@@ -78,34 +78,60 @@
     return getJSON('https://api.open-meteo.com/v1/forecast'
       + `?latitude=${pts.map((p) => p.lat).join(',')}&longitude=${pts.map((p) => p.lon).join(',')}`
       + '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset'
-      + '&wind_speed_unit=kmh&timezone=Australia%2FBrisbane&past_days=1&forecast_days=7');
+      + `&wind_speed_unit=kmh&timezone=Australia%2FBrisbane&past_days=1&forecast_days=${C.outlook.days}`);
+  }
+
+  // Second-opinion models: GFS waves (also fills days 10–16), ECMWF waves, ECMWF + GFS wind.
+  async function fetchModels() {
+    const pts = C.spots;
+    const ll = `?latitude=${pts.map((p) => p.lat).join(',')}&longitude=${pts.map((p) => p.lon).join(',')}`
+      + `&timezone=Australia%2FBrisbane&forecast_days=${C.outlook.days}`;
+    const MV = MARINE_VARS.replace(',sea_level_height_msl', '');
+    const res = await Promise.allSettled([
+      getJSON(`https://marine-api.open-meteo.com/v1/marine${ll}&cell_selection=sea&models=ncep_gfswave025&hourly=${MV}`),
+      getJSON(`https://marine-api.open-meteo.com/v1/marine${ll}&cell_selection=sea&models=ecmwf_wam025&hourly=wave_height`),
+      getJSON(`https://api.open-meteo.com/v1/forecast${ll}&models=ecmwf_ifs025,gfs_seamless&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh`),
+    ]);
+    // each model is optional: one failing must not drop the others (GFS also fills days 10–16)
+    const arr = (r) => (r.status === 'fulfilled' ? (Array.isArray(r.value) ? r.value : [r.value]).map((x) => x.hourly) : []);
+    if (res.every((r) => r.status !== 'fulfilled')) throw res[0].reason;
+    return { gfs: arr(res[0]), ec: arr(res[1]), wind: arr(res[2]) };
   }
 
   const CKAN = 'https://www.data.qld.gov.au/api/3/action/datastore_search';
 
-  // MSQ predicted high/low tides for each port, yesterday → +8 days.
-  async function fetchTides() {
-    const today = nowStr().slice(0, 10);
-    const dates = [];
-    for (let i = -1; i <= 8; i++) dates.push(addDays(today, i));
-    const out = {};
-    // each port settles on its own, so one failing port doesn't drop the other
-    await Promise.allSettled(Object.entries(C.tides).map(async ([key, port]) => {
-      const byYear = {};
-      for (const d of dates) (byYear[d.slice(0, 4)] ||= []).push(`${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`);
-      let recs = [];
-      for (const [y, ds] of Object.entries(byYear)) {
-        const id = port.resources[y];
-        if (!id) continue;
-        const j = await getJSON(`${CKAN}?resource_id=${id}&limit=200&filters=${encodeURIComponent(JSON.stringify({ Date: ds }))}`);
-        recs = recs.concat(j.result.records);
-      }
-      if (recs.length < 4) throw new Error(`No tide table for ${port.name}`);
-      out[key] = recs.map((r) => {
+  // MSQ predicted highs/lows for one port on the given dates ("YYYY-MM-DD").
+  async function fetchPortTides(port, dates) {
+    const byYear = {};
+    for (const d of dates) (byYear[d.slice(0, 4)] ||= []).push(`${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`);
+    let recs = [], missing = 0;
+    for (const [y, ds] of Object.entries(byYear)) {
+      const id = port.resources[y];
+      if (!id) { missing++; continue; }
+      const j = await getJSON(`${CKAN}?resource_id=${id}&limit=300&filters=${encodeURIComponent(JSON.stringify({ Date: ds }))}`);
+      recs = recs.concat(j.result.records);
+    }
+    return {
+      missing,
+      list: recs.map((r) => {
         const [d, m, y] = r.Date.split('/');
         const t = `${y}-${m}-${d}T${r.Time.padStart(5, '0')}`;
         return { t, m: toMin(t), h: +r.Reading, hi: String(r.Ind).trim() === '1' };
-      }).sort((a, b) => a.m - b.m);
+      }).sort((a, b) => a.m - b.m),
+    };
+  }
+
+  // MSQ tides for each port, yesterday → the end of the outlook.
+  async function fetchTides() {
+    const today = nowStr().slice(0, 10);
+    const dates = [];
+    for (let i = -1; i <= C.outlook.days + 1; i++) dates.push(addDays(today, i));
+    const out = {};
+    // each port settles on its own, so one failing port doesn't drop the other
+    await Promise.allSettled(Object.entries(C.tides).map(async ([key, port]) => {
+      const { list } = await fetchPortTides(port, dates);
+      if (list.length < 4) throw new Error(`No tide table for ${port.name}`);
+      out[key] = list;
     }));
     if (!Object.keys(out).length) throw new Error('No tide data');
     return out;
@@ -266,22 +292,37 @@
     const sun = {};
     const D = wind[0].daily;
     D.time.forEach((d, i) => (sun[d] = { rise: D.sunrise[i], set: D.sunset[i] }));
+    const ext = raw.ext || null;
+    const idx = (H) => (H && H.time ? new Map(H.time.map((t, i) => [t, i])) : new Map());
     const spots = C.spots.map((spot, si) => {
       const M = marine[si].hourly, W = wind[si].hourly;
-      const wIdx = new Map(W.time.map((t, i) => [t, i]));
-      const g = (k, i) => (M[k] ? M[k][i] : null);
+      const G = ext && ext.gfs[si], E = ext && ext.ec[si], X = ext && ext.wind[si];
+      const wIdx = idx(W), gIdx = idx(G), eIdx = idx(E), xIdx = idx(X);
+      const pick = (S, k, i) => (S && S[k] && i != null ? S[k][i] : null);
       const hours = [];
       M.time.forEach((t, i) => {
         const wi = wIdx.get(t);
-        if (wi == null || g('swell_wave_height', i) == null) return;
+        if (wi == null) return;
+        // default model first; GFS waves fill in where it ends (≈ day 10 onwards)
+        let S = M, j = i, src = 'om';
+        if (pick(M, 'swell_wave_height', i) == null) { S = G; j = gIdx.get(t); src = 'gfs'; }
+        const g = (k) => pick(S, k, j);
+        if (g('swell_wave_height') == null) return;
+        const xi = xIdx.get(t);
         hours.push({
-          t, date: t.slice(0, 10), hour: +t.slice(11, 13),
-          wave: g('wave_height', i),
-          sw: { h: g('swell_wave_height', i), d: g('swell_wave_direction', i), p: g('swell_wave_period', i) },
-          sw2: { h: g('secondary_swell_wave_height', i), d: g('secondary_swell_wave_direction', i), p: g('secondary_swell_wave_period', i) },
-          ww: { h: g('wind_wave_height', i), d: g('wind_wave_direction', i) },
+          t, date: t.slice(0, 10), hour: +t.slice(11, 13), src,
+          wave: g('wave_height'),
+          sw: { h: g('swell_wave_height'), d: g('swell_wave_direction'), p: g('swell_wave_period') },
+          sw2: { h: g('secondary_swell_wave_height'), d: g('secondary_swell_wave_direction'), p: g('secondary_swell_wave_period') },
+          ww: { h: g('wind_wave_height'), d: g('wind_wave_direction') },
           wind: { s: W.wind_speed_10m[wi], d: W.wind_direction_10m[wi], g: W.wind_gusts_10m[wi] },
-          sl: g('sea_level_height_msl', i),
+          sl: pick(M, 'sea_level_height_msl', i),
+          // every model's view of this hour, for the confidence check
+          ens: {
+            wave: [pick(M, 'wave_height', i), pick(G, 'wave_height', gIdx.get(t)), pick(E, 'wave_height', eIdx.get(t))].filter((v) => v != null),
+            ws: [W.wind_speed_10m[wi], pick(X, 'wind_speed_10m_ecmwf_ifs025', xi), pick(X, 'wind_speed_10m_gfs_seamless', xi)].filter((v) => v != null),
+            wd: [W.wind_direction_10m[wi], pick(X, 'wind_direction_10m_ecmwf_ifs025', xi), pick(X, 'wind_direction_10m_gfs_seamless', xi)].filter((v) => v != null),
+          },
         });
       });
       attachTide(hours, raw.tides && raw.tides[spot.tidePort]);
@@ -293,12 +334,53 @@
     return { spots, sun, buoyFc };
   }
 
-  function morningDates() {
+  // Mornings from today (or tomorrow once this morning's window has passed) to the end of the outlook.
+  function morningDates(n = C.outlook.days) {
     const now = nowStr();
     let start = now.slice(0, 10);
     if (+now.slice(11, 13) > R.morning.endHour) start = addDays(start, 1);
-    return [0, 1, 2].map((i) => addDays(start, i));
+    const have = model ? new Set(model.spots[0].hours.map((h) => h.date)) : null;
+    return Array.from({ length: n }, (_, i) => addDays(start, i)).filter((d) => !have || have.has(d));
   }
+  const leadDays = (d) => Math.round((toMin(d) - toMin(nowStr().slice(0, 10))) / 1440);
+  const isTrend = (d) => leadDays(d) + 1 >= C.outlook.trendFromDay;
+
+  // How much to trust a morning: do the independent models agree, and how far out is it?
+  const CONF = ['', 'Low', 'Medium', 'High'];
+  function confidence(m) {
+    const K = C.confidence;
+    const lin = (v, [a, b]) => clamp((v - a) / (b - a), 0, 1);
+    const avg = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
+    const dw = [], dwi = [];
+    for (const h of m.hrs) {
+      const e = h.ens;
+      if (!e) continue;
+      if (e.wave.length > 1) dw.push(lin((Math.max(...e.wave) - Math.min(...e.wave)) / Math.max(0.3, avg(e.wave)), K.waveSpread));
+      if (e.ws.length > 1) {
+        let d = lin(Math.max(...e.ws) - Math.min(...e.ws), K.windSpread);
+        if (Math.max(...e.ws) > 8 && e.wd.length > 1) {
+          let a = 0;
+          for (const x of e.wd) for (const y of e.wd) a = Math.max(a, angDiff(x, y));
+          d = Math.max(d, lin(a, K.windDirSpread));
+        }
+        dwi.push(d);
+      }
+    }
+    const wave = avg(dw), wind = avg(dwi);
+    const known = [wave, wind].filter((v) => v != null);
+    const agree = known.length ? 1 - avg(known) * 0.85 : 0.85; // no second opinion → assume decent
+    const lead = leadDays(m.date);
+    const score = agree * interp(K.lead, lead);
+    const level = score >= K.levels[0] ? 3 : score >= K.levels[1] ? 2 : 1;
+    let note;
+    if (!known.length) note = 'only one model available';
+    else if ((wind || 0) > 0.45 && (wind || 0) >= (wave || 0)) note = 'models disagree on the wind';
+    else if ((wave || 0) > 0.45) note = 'models disagree on swell size';
+    else if (lead + 1 >= C.outlook.trendFromDay) note = 'models agree, but it’s a long way out';
+    else note = 'models agree';
+    return { level, word: CONF[level], note, score };
+  }
+  const confDots = (c) => `<span class="conf l${c.level}" title="${c.word} confidence: ${esc(c.note)}"><i></i><i></i><i></i></span>`;
 
   function morningFor(sp, date) {
     const rise = model.sun[date] && model.sun[date].rise;
@@ -318,11 +400,15 @@
      STATE
      ================================================================ */
   let raw = null, model = null;
-  const status = { marine: 'pending', wind: 'pending', tides: 'pending', buoys: 'pending' };
+  const status = { marine: 'pending', wind: 'pending', ext: 'pending', tides: 'pending', buoys: 'pending' };
   const ui = {
     region: store.get('dawnie:region') || C.ui.defaultRegion,
     day: 0,
     view: new URLSearchParams(location.search).get('view') || store.get('dawnie:view') || C.ui.detailView,
+    windy: store.get('dawnie:windy') || 'waves',
+    date: null,      // selected morning ("YYYY-MM-DD"); null = first
+    tableAll: false,
+    tideDate: null,
   };
 
   // Network / refresh state, used by the subtitle, refresh button and source list.
@@ -349,7 +435,7 @@
     if (net.busy) return;
     const started = Date.now();
     setBusy(true);
-    const cached = store.get('dawnie:data:v1');
+    const cached = store.get('dawnie:data:v2');
     const fresh = cached && Date.now() - cached.ts < C.ui.cacheMinutes * 60e3;
     let cacheOk = false;
     if (cached && !raw) {
@@ -367,13 +453,13 @@
         .catch(() => { status.buoys = raw.buoys ? 'warn' : 'err'; renderBuoys(); renderSources(); });
       return;
     }
-    const [m, w, t, b] = await Promise.allSettled([fetchMarine(), fetchWind(), fetchTides(), fetchBuoys()]);
+    const [m, w, x, t, b] = await Promise.allSettled([fetchMarine(), fetchWind(), fetchModels(), fetchTides(), fetchBuoys()]);
     const next = { ...(raw || {}) };
     const take = (key, res) => {
       if (res.status === 'fulfilled') { next[key] = res.value; status[key] = 'ok'; }
       else { status[key] = next[key] ? 'warn' : 'err'; console.warn(key, res.reason); }
     };
-    take('marine', m); take('wind', w); take('tides', t); take('buoys', b);
+    take('marine', m); take('wind', w); take('ext', x); take('tides', t); take('buoys', b);
     if (t.status !== 'fulfilled') {
       // keep the saved MSQ tide table if it still covers the next few days
       const horizon = toMin(addDays(nowStr().slice(0, 10), 4));
@@ -396,7 +482,7 @@
     raw = next;
     if (gotForecast) {
       raw.fetchedAt = Date.now();
-      store.set('dawnie:data:v1', { ts: Date.now(), raw });
+      store.set('dawnie:data:v2', { ts: Date.now(), raw });
     }
     model = buildModel(raw);
     if (force && gotForecast) net.flash = Date.now();
@@ -453,23 +539,32 @@
     route();
   }
 
+  // Re-render whichever home tab is showing (Today renders in renderHome).
+  function renderPanes() {
+    renderOutlook();
+    renderMap();
+  }
+
   function renderHome() {
     const region = ui.region;
     $('.region').dataset.active = region;
     document.querySelectorAll('.region button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.region === region)));
     renderUpdated();
 
-    const dates = morningDates();
-    ui.day = Math.min(ui.day, dates.length - 1);
-    const spots = model.spots.filter((s) => s.spot.region === region);
-    const ranks = dates.map((d) => spots.map((sp) => ({ sp, m: morningFor(sp, d) })).filter((x) => x.m)
-      .sort((a, b) => b.m.best.score - a.m.best.score));
+    const { dates, ranks } = regionRanks(region);
+    if (!dates.length) { renderError(); return; }
+    ui.day = Math.max(0, dates.indexOf(ui.date)); // selection is a date, so it survives the morning rolling over
+    ui.date = dates[ui.day];
 
-    $('#days').innerHTML = dates.map((d, i) => {
-      const top = ranks[i][0];
+    // three mornings up front; an outlook day picked from the Outlook tab joins as a fourth
+    const shown = [0, 1, 2].filter((i) => i < dates.length);
+    if (ui.day > 2) shown.push(ui.day);
+    $('#days').classList.toggle('four', shown.length > 3);
+    $('#days').innerHTML = shown.map((i) => {
+      const d = dates[i], top = ranks[i][0];
       const named = dayName(d) !== wd(d);
-      return `<button class="day" role="tab" data-i="${i}" aria-selected="${i === ui.day}"${top ? ` style="--c:${colour(top.m.best)}"` : ''}>
-        <span class="d1">${named ? dayName(d) : LONGDAY[wd(d)]}</span>
+      return `<button class="day${isTrend(d) ? ' trend' : ''}" role="tab" data-i="${i}" aria-selected="${i === ui.day}"${top ? ` style="--c:${colour(top.m.best)}"` : ''}>
+        <span class="d1">${named ? dayName(d) : (shown.length > 3 ? wd(d) : LONGDAY[wd(d)])}</span>
         <span class="d2">${named ? wd(d) + ' ' : ''}${dm(d)}</span>
         <span class="d3">${top ? label(top.m.best) : '–'}</span>
       </button>`;
@@ -483,6 +578,7 @@
       : '';
 
     renderHero(list[0], date);
+    renderSummary(list, date);
 
     $('#ranking').innerHTML = list.map(({ sp, m }, i) => {
       const b = m.best;
@@ -498,6 +594,7 @@
 
     renderBuoys();
     renderSources();
+    renderPanes();
   }
 
   // Bar height for an hour: its score, full height at Epic, with a floor so every hour reads.
@@ -541,7 +638,7 @@
     const tide = b.tide ? `${f1(b.tide.h)}<small> m</small>` : '–';
     const tideArrow = (up) => `<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" style="color:var(--tide)"><path d="M6 ${up ? '10V2M2.5 5.5 6 2l3.5 3.5' : '2v8M2.5 6.5 6 10l3.5-3.5'}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     el.innerHTML = `<div class="hero-in">
-        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayName(date)} · ${hourLbl(b.hour)}</span></div>
+        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayName(date)} · ${hourLbl(b.hour)}${confDots(confidence(m))}</span></div>
         <div class="hero-rating">${label(b)}</div>
         <div class="hero-name">${esc(sp.spot.name)}</div>
         <p class="hero-why">${esc(cap(why(b).join(', ')))}.</p>
@@ -558,6 +655,373 @@
   // Re-run the entrance animation on hero + lineup (region / day change only).
   function swapIn() {
     for (const el of [$('#hero'), $('#ranking')]) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
+  }
+
+  /* ---------------- Shared: ranked mornings for a region ---------------- */
+  let rankMemo = { model: null };
+  function regionRanks(region) {
+    if (rankMemo.model !== model || rankMemo.now !== nowStr().slice(0, 13)) rankMemo = { model, now: nowStr().slice(0, 13) };
+    if (rankMemo[region]) return rankMemo[region];
+    const dates = morningDates();
+    const spots = model.spots.filter((s) => s.spot.region === region);
+    const ranks = dates.map((d) => spots.map((sp) => ({ sp, m: morningFor(sp, d) })).filter((x) => x.m)
+      .sort((a, b) => b.m.best.score - a.m.best.score));
+    const conf = ranks.map((l) => (l[0] ? confidence(l[0].m) : null));
+    return (rankMemo[region] = { dates, ranks, conf });
+  }
+
+  /* ---------------- Plain-English morning summary ---------------- */
+  const sizeWord = (h) => (h < 0.35 ? 'Tiny' : h < 0.7 ? 'Small' : h < 1.1 ? 'Fun-sized' : h < 1.6 ? 'Solid' : 'Big');
+  const windPhrase = (w) => (w.s == null ? 'unknown' : w.s < R.wind.glassy ? 'calm' : `${w.s < R.wind.light ? 'light ' : ''}${cmp(w.d)} ${Math.round(w.s)} km/h`);
+
+  function tideTurnsIn(port, m0, m1) {
+    const ext = raw.tides && raw.tides[port];
+    return ext ? ext.filter((e) => e.m >= m0 && e.m <= m1) : [];
+  }
+
+  function summaryText(list, date) {
+    if (!list.length) return null;
+    const top = list[0], m = top.m, b = m.best, s = top.sp.spot;
+    const h0 = m.hrs[0], h1 = m.hrs[m.hrs.length - 1];
+    const out = [];
+    // swell
+    const sw = b.main || b.sw;
+    let t = `${sizeWord(b.surf)} at the breaks, about <b>${f1(b.surf)} m</b>, from ${f1(sw.h)} m of ${cmp(sw.d)} swell at ${Math.round(sw.p || 0)} s out to sea`;
+    const other = b.main && b.main.h === b.sw2.h ? b.sw : b.sw2;
+    if (other.h > 0.4) t += ` plus ${f1(other.h)} m ${cmp(other.d)} at ${Math.round(other.p || 0)} s`;
+    else if ((b.ww.h || 0) > 0.5) t += ` plus ${f1(b.ww.h)} m of ${cmp(b.ww.d)} wind chop`;
+    out.push(t + '.');
+    // wind
+    const w0 = h0.wind, w1 = h1.wind;
+    const same = w0.s != null && w1.s != null && cmp(w0.d) === cmp(w1.d) && Math.abs(w0.s - w1.s) < 6;
+    out.push(same ? `Wind <b>${windPhrase(w0)}</b> all morning.`
+      : `Wind <b>${windPhrase(w0)}</b> at first light, ${windPhrase(w1)} by ${hourLbl(h1.hour)}.`);
+    // tide
+    const turns = tideTurnsIn(s.tidePort, m.firstLight, toMin(date) + R.morning.endHour * 60 + 59);
+    if (turns.length) out.push(turns.map((e, i) => `${i ? '' : ''}${e.hi ? 'High' : 'Low'} tide ${clock(e.t)} (${e.h.toFixed(1)} m)`).join(', ') + '.');
+    else if (h0.tide && h1.tide) out.push(`Tide ${tideWord(h0.tide).replace(' tide', '')} to ${tideWord(h1.tide)}.`);
+    // verdict
+    const goods = list.filter((x) => x.m.best.rating >= 3 && !x.m.best.flag).length;
+    if (b.rating <= 1 || b.flag) {
+      out.push(b.flag === 'big' ? 'Too big everywhere for the log — one to watch from the beach.' : `Probably one to skip: nowhere better than ${label(b).toLowerCase()}.`);
+    } else {
+      const alt = list[1] && list[1].m.best.rating >= 2 ? `, or ${esc(list[1].sp.spot.short)}` : '';
+      out.push(`Pick: <b>${esc(s.short)} around ${hourLbl(b.hour)}</b>${alt}.${goods > 1 ? ` ${goods} spots rate Good or better.` : ''}`);
+    }
+    return out.join(' ');
+  }
+
+  function renderSummary(list, date) {
+    const el = $('#summary');
+    const txt = summaryText(list, date);
+    if (!txt) { el.innerHTML = ''; return; }
+    const c = confidence(list[0].m);
+    el.innerHTML = `<div class="block-head"><h2>The morning</h2><span class="block-meta">${wd(date)} ${dm(date)}</span></div>
+      <p class="sum-p">${txt}</p>
+      <div class="sum-conf">${confDots(c)}<span><b>${c.word} confidence</b> · ${esc(c.note)}</span></div>`;
+  }
+
+  /* ---------------- Outlook tab ---------------- */
+  function renderOutlook() {
+    const el = $('#pane-outlook');
+    if (!model || el.hidden) return;
+    const { dates, ranks, conf } = regionRanks(ui.region);
+    const tops = ranks.map((l) => l[0] || null);
+    const trendAt = dates.findIndex(isTrend);
+    const regionName = ui.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast';
+
+    // days to watch: best mornings from tomorrow on that reach the bar
+    const cand = tops.map((t, i) => ({ t, i })).filter(({ t, i }) => i > 0 && t && !t.m.best.flag && t.m.best.rating >= C.outlook.watchMin);
+    const watch = cand.sort((a, b) => b.t.m.best.score * (conf[b.i] ? conf[b.i].score + 0.5 : 1) - a.t.m.best.score * (conf[a.i] ? conf[a.i].score + 0.5 : 1))
+      .slice(0, C.outlook.watchMax).sort((a, b) => a.i - b.i);
+    let watchHtml;
+    if (watch.length) {
+      watchHtml = `<div class="watch-grid n${watch.length}">${watch.map(({ t, i }) => {
+        const b = t.m.best, d = dates[i];
+        return `<button class="watch${isTrend(d) ? ' trend' : ''}" data-goday="${i}" style="--c:${colour(b)}">
+          <span class="w-day">${dayShort(d)} <span>${dm(d)}</span></span>
+          <span class="w-rate">${label(b)}</span>
+          <span class="w-spot">${esc(t.sp.spot.short)} · ${hourLbl(b.hour)}</span>
+          <span class="w-why">${f1(b.surf)} m ${cmp(b.main ? b.main.d : b.sw.d)} ${Math.round(b.period)} s, ${windPhrase(b.wind)}</span>
+          <span class="w-conf">${confDots(conf[i])}${conf[i].word}</span>
+        </button>`;
+      }).join('')}</div>`;
+    } else {
+      const bestI = tops.reduce((a, t, i) => (i > 0 && t && (a < 0 || t.m.best.score > tops[a].m.best.score) ? i : a), -1);
+      const t = tops[bestI];
+      watchHtml = `<div class="watch-none">Nothing stands out yet.${t ? ` The pick of the next ${dates.length - 1} mornings is <b>${label(t.m.best).toLowerCase()}</b> at ${esc(t.sp.spot.short)} on ${dayShort(dates[bestI])} ${dm(dates[bestI])}.` : ''}</div>`;
+    }
+
+    el.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>Days to watch</h2><span class="block-meta">${regionName}</span></div>
+        ${watchHtml}
+      </section>
+      <section class="block">
+        <div class="block-head"><h2>${dates.length}-day outlook</h2><span class="block-meta">Best of each morning</span></div>
+        ${outlookChart(dates, tops, trendAt)}
+        <ol class="olist">${dates.map((d, i) => {
+          const t = tops[i];
+          const divider = i === trendAt ? `<li class="o-div"><span>Day ${C.outlook.trendFromDay} on · trend only, expect changes</span></li>` : '';
+          if (!t) return divider;
+          const b = t.m.best;
+          return `${divider}<li class="o-row${isTrend(d) ? ' trend' : ''}${i === ui.day ? ' sel' : ''}" data-goday="${i}" style="--c:${colour(b)}">
+            <span class="o-day"><b>${dayShort(d)}</b><span>${dm(d)}</span></span>
+            <span class="o-main">
+              <span class="o-top"><span class="o-rate">${label(b)}</span><span class="o-spot">${esc(t.sp.spot.short)} · ${hourLbl(b.hour)}</span></span>
+              <span class="o-why">${f1(b.surf)} m ${cmp(b.main ? b.main.d : b.sw.d)} @ ${Math.round(b.period)} s · ${b.wI.cat === 'glassy' ? 'glassy' : windPhrase(b.wind) + ' ' + ({ offshore: 'off', onshore: 'on', cross: 'cross' }[b.wI.cat])}</span>
+            </span>
+            ${conf[i] ? confDots(conf[i]) : ''}
+          </li>`;
+        }).join('')}</ol>
+        <p class="fine o-fine">Each row is the best spot and hour between first light and ${hourLbl(R.morning.endHour)}. Dots show confidence: how well independent wave and wind models agree, faded by how far out it is.</p>
+      </section>`;
+  }
+
+  function outlookChart(dates, tops, trendAt) {
+    const n = dates.length, W = 340, H = 132, top = 18, base = 104, bw = W / n;
+    const vals = tops.map((t) => (t ? t.m.best.surf : 0));
+    const max = Math.max(1.6, ...vals) * 1.12;
+    const y = (v) => base - (v / max) * (base - top);
+    let s = `<rect x="0" y="${y(R.size.idealHigh).toFixed(1)}" width="${W}" height="${(y(R.size.idealLow) - y(R.size.idealHigh)).toFixed(1)}" class="oc-band"/>`;
+    [0.5, 1, 1.5, 2, 3].filter((v) => v < max).forEach((v) => (s += `<line x1="0" x2="${W}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="oc-grid"/><text x="${W}" y="${(y(v) - 3).toFixed(1)}" text-anchor="end" class="oc-t">${v} m</text>`));
+    if (trendAt > 0) {
+      const x = trendAt * bw;
+      s += `<rect x="${x.toFixed(1)}" y="0" width="${(W - x).toFixed(1)}" height="${H}" class="oc-trend"/><line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="2" y2="${base}" class="oc-div"/><text x="${(x + 5).toFixed(1)}" y="9" class="oc-lbl">TREND</text>`;
+    }
+    tops.forEach((t, i) => {
+      const x = i * bw + 3, w = bw - 6, d = dates[i];
+      const sel = i === ui.day ? ' sel' : '';
+      s += `<g class="oc-b${sel}" data-goday="${i}"><rect x="${(i * bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>`;
+      if (t) {
+        const yy = Math.min(y(t.m.best.surf), base - 2);
+        s += `<rect x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${(base - yy).toFixed(1)}" rx="2" fill="${colour(t.m.best)}"${isTrend(d) ? ' opacity=".55"' : ''}/>`;
+      }
+      s += `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${base + 13}" text-anchor="middle" class="oc-d">${wd(d)[0]}</text><text x="${(i * bw + bw / 2).toFixed(1)}" y="${base + 24}" text-anchor="middle" class="oc-n">${+d.slice(8, 10)}</text></g>`;
+    });
+    s += `<line x1="0" x2="${W}" y1="${base + 0.5}" y2="${base + 0.5}" class="oc-base"/>`;
+    return `<svg class="ochart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Best morning surf height for each of the next ${n} days">${s}</svg>`;
+  }
+
+  /* ---------------- Map tab: spot map (Leaflet + CARTO) and Windy ---------------- */
+  let lmap = null, lmarkers = [], leafletP = null;
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    if (leafletP) return leafletP;
+    leafletP = new Promise((res, rej) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+      css.crossOrigin = 'anonymous'; css.integrity = 'sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==';
+      document.head.appendChild(css);
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      s.crossOrigin = 'anonymous'; s.integrity = 'sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==';
+      s.onload = res; s.onerror = () => { leafletP = null; rej(new Error('leaflet')); };
+      document.head.appendChild(s);
+    });
+    return leafletP;
+  }
+
+  function miniDays(dates, ranks, n = 7) {
+    const idx = Array.from({ length: Math.min(n, dates.length) }, (_, i) => i);
+    if (ui.day >= idx.length) idx.push(ui.day);
+    return idx.map((i) => {
+      const t = ranks[i][0], d = dates[i];
+      return `<button class="mday${isTrend(d) ? ' trend' : ''}" data-mday="${i}" aria-pressed="${i === ui.day}" style="--c:${t ? colour(t.m.best) : 'var(--tx-3)'}"><b>${i === 0 ? dayName(d) === 'Today' ? 'Today' : wd(d) : wd(d)}</b><span>${dm(d)}</span><i></i></button>`;
+    }).join('');
+  }
+
+  async function renderMap() {
+    const pane = $('#pane-map');
+    if (!model || pane.hidden || $('#home').hidden) return;
+    const { dates, ranks } = regionRanks(ui.region);
+    const list = ranks[ui.day] || [];
+    $('#map-days').innerHTML = miniDays(dates, ranks);
+    $('#map-meta').textContent = `${dayName(dates[ui.day])} ${dm(dates[ui.day])} · best hour`;
+    renderWindy();
+    try { await loadLeaflet(); } catch {
+      $('#spotmap').innerHTML = '<p class="map-err">The map couldn’t load. Check your connection and try again.</p>';
+      return;
+    }
+    if (pane.hidden || $('#home').hidden) return; // user moved on while Leaflet loaded
+    const L = window.L;
+    if (!lmap) {
+      $('#spotmap').innerHTML = '';
+      // one-finger drag scrolls the page on a phone; pinch or the +/- buttons move the map
+      lmap = L.map('spotmap', { zoomControl: false, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.25, dragging: !L.Browser.mobile, tap: false });
+      // Standard OSM tiles (free, no key; light personal use), darkened in CSS to match the app.
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      }).addTo(lmap);
+      L.control.zoom({ position: 'bottomright' }).addTo(lmap);
+      lmap.on('zoomend moveend', declutter);
+    }
+    lmap.invalidateSize();
+    if (lmap._region !== ui.region) {
+      const pts = C.spots.filter((s) => s.region === ui.region).map((s) => [s.lat, s.lon]);
+      lmap.fitBounds(pts, { padding: [46, 46], maxZoom: 13 });
+      lmap._region = ui.region;
+    }
+    lmarkers.forEach((mk) => mk.remove());
+    lmarkers = list.map(({ sp, m }, k) => {
+      const b = m.best, s = sp.spot;
+      const icon = L.divIcon({
+        className: 'pin-wrap', iconSize: [0, 0],
+        html: `<span class="pin" style="--c:${colour(b)}"><i></i><span class="pin-l"><b>${esc(s.short)}</b>${label(b)}</span></span>`,
+      });
+      const mk = L.marker([s.lat, s.lon], { icon, keyboard: false, zIndexOffset: 100 - k, title: `${s.name}: ${label(b)}` }).addTo(lmap);
+      mk.on('click', () => { homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${s.id}`; });
+      return mk;
+    });
+    declutter();
+  }
+
+  // Keep labels readable where breaks sit close together: try right, then left, else dot only.
+  function declutter() {
+    if (!lmap) return;
+    const placed = [];
+    const hit = (r) => placed.some((p) => r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y);
+    lmarkers.forEach((mk) => {
+      const el = mk.getElement();
+      if (!el) return;
+      const pin = el.querySelector('.pin'), lbl = el.querySelector('.pin-l');
+      pin.classList.remove('left', 'nolabel');
+      const pt = lmap.latLngToContainerPoint(mk.getLatLng());
+      const w = lbl.offsetWidth + 6, h = 30;
+      placed.push({ x: pt.x - 7, y: pt.y - 7, w: 14, h: 14 });
+      const right = { x: pt.x + 9, y: pt.y - h / 2, w, h }, left = { x: pt.x - 9 - w, y: pt.y - h / 2, w, h };
+      if (!hit(right)) placed.push(right);
+      else if (!hit(left)) { pin.classList.add('left'); placed.push(left); }
+      else pin.classList.add('nolabel');
+    });
+  }
+
+  const WINDY = { waves: ['waves', 'ecmwfWaves', 'Swell'], wind: ['wind', 'ecmwf', 'Wind'], rain: ['rain', 'ecmwf', 'Rain'] };
+  function renderWindy() {
+    const el = $('#windy');
+    const layer = WINDY[ui.windy] ? ui.windy : 'waves';
+    document.querySelectorAll('#windy-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.layer === layer)));
+    const [la, lo, z] = C.maps.windy[ui.region], [ov, pr, name] = WINDY[layer];
+    const src = `https://embed.windy.com/embed2.html?lat=${la}&lon=${lo}&detailLat=${la}&detailLon=${lo}&zoom=${z}&level=surface&overlay=${ov}&product=${pr}`
+      + '&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1';
+    if (el.dataset.src === src) return;
+    el.dataset.src = src;
+    el.classList.remove('live');
+    el.innerHTML = `<iframe src="${src}" title="Windy ${name.toLowerCase()} map" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <button class="windy-guard" aria-label="Use the ${name.toLowerCase()} map"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.6-2.2L4.6 15.6a1.5 1.5 0 0 1 2.3-1.9L9 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Tap to explore</span></button>`;
+  }
+  // The page scrolls past the Windy map without getting stuck in it; one tap hands over control.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) e.target.classList.remove('live'); }), { threshold: 0.15 }).observe($('#windy'));
+  }
+
+  /* ---------------- Sun times for any date (NOAA-style approximation) ---------------- */
+  function sunFor(date, lat, lon) {
+    if (model && model.sun[date]) return model.sun[date];
+    const rad = Math.PI / 180;
+    const J = Date.parse(date + 'T12:00Z') / 864e5 + 2440587.5;
+    const n = Math.round(J - 2451545 + 0.0008), Js = n - lon / 360;
+    const M = (357.5291 + 0.98560028 * Js) % 360;
+    const Cc = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad);
+    const Lm = (M + Cc + 180 + 102.9372) % 360;
+    const Jt = 2451545 + Js + 0.0053 * Math.sin(M * rad) - 0.0069 * Math.sin(2 * Lm * rad);
+    const dec = Math.asin(Math.sin(Lm * rad) * Math.sin(23.4397 * rad));
+    const w = Math.acos((Math.sin(-0.833 * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec))) / rad;
+    const toS = (j) => bneStr((j - 2440587.5) * 864e5);
+    return { rise: toS(Jt - w / 360), set: toS(Jt + w / 360) };
+  }
+
+  /* ---------------- Tide planner (spot page) ---------------- */
+  const tideCache = {};
+  async function tidesForDay(portKey, date) {
+    const lo = toMin(addDays(date, -1)), hi = toMin(addDays(date, 2)); // a full day either side, so the curve always spans midnight
+    const have = raw.tides && raw.tides[portKey];
+    if (have && have.length && have[0].m <= lo && have[have.length - 1].m >= hi) return { list: have.filter((e) => e.m >= lo && e.m <= hi) };
+    const key = portKey + date;
+    if (!tideCache[key]) {
+      tideCache[key] = fetchPortTides(C.tides[portKey], [addDays(date, -1), date, addDays(date, 1)])
+        .then((r) => ({ list: r.list.filter((e) => e.m >= lo && e.m <= hi), missing: r.missing }))
+        .catch((e) => { delete tideCache[key]; throw e; });
+    }
+    return tideCache[key];
+  }
+
+  async function renderTidePlanner(sp) {
+    const el = $('#tideplan');
+    if (!el) return;
+    const s = sp.spot, date = ui.tideDate || nowStr().slice(0, 10);
+    const port = C.tides[s.tidePort];
+    const head = `<div class="tp-bar">
+        <button class="icon-btn sm" data-tide-step="-1" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <label class="tp-date"><span class="tp-d1">${dayName(date) === wd(date) ? LONGDAY[wd(date)] : dayName(date)}</span><span class="tp-d2">${dm(date)}/${date.slice(0, 4)}</span>
+          <input type="date" id="tide-date" value="${date}" aria-label="Pick a date"></label>
+        <button class="icon-btn sm" data-tide-step="1" aria-label="Next day"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>`;
+    el.innerHTML = head + '<div class="tp-body"><div class="skel" style="height:120px"></div></div>';
+    let res;
+    try { res = await tidesForDay(s.tidePort, date); } catch {
+      if ((ui.tideDate || nowStr().slice(0, 10)) !== date) return;
+      $('.tp-body', el).innerHTML = '<p class="tp-msg">Couldn’t reach the MSQ tide tables. Check your connection.</p>';
+      return;
+    }
+    if ((ui.tideDate || nowStr().slice(0, 10)) !== date || !$('#tideplan')) return; // user moved on
+    const list = res.list;
+    const day0 = toMin(date), day1 = day0 + 1440;
+    if (list.filter((e) => e.m >= day0 && e.m < day1).length < 2) {
+      $('.tp-body', el).innerHTML = `<p class="tp-msg">${res.missing ? `MSQ hasn’t published ${date.slice(0, 4)} tide tables for ${esc(port.name)} yet.` : 'No tide predictions for this date.'}</p>`;
+      return;
+    }
+    const sun = sunFor(date, s.lat, s.lon);
+    const W = 340, H = 124, top = 32, bot = 90;
+    const X = (m) => ((m - day0) / 1440) * W;
+    const hs = list.map((e) => e.h), lo = Math.min(...hs), hi = Math.max(...hs);
+    const Y = (v) => bot - ((v - lo) / (hi - lo || 1)) * (bot - top);
+    const at = (m) => {
+      const k = list.findIndex((e) => e.m > m);
+      if (k <= 0) return null;
+      const a = list[k - 1], b = list[k], f = (1 - Math.cos((Math.PI * (m - a.m)) / (b.m - a.m))) / 2;
+      return a.h + (b.h - a.h) * f;
+    };
+    let d = '';
+    for (let m = day0; m <= day1; m += 10) { const v = at(m); if (v != null) d += `${d ? 'L' : 'M'}${X(m).toFixed(1)} ${Y(v).toFixed(1)}`; }
+    const rise = toMin(sun.rise), set = toMin(sun.set), first = rise - R.morning.firstLightBeforeSunrise, end = day0 + R.morning.endHour * 60;
+    let svg = `<rect x="0" y="0" width="${X(rise).toFixed(1)}" height="${bot}" class="tp-night"/><rect x="${X(set).toFixed(1)}" y="0" width="${(W - X(set)).toFixed(1)}" height="${bot}" class="tp-night"/>`;
+    svg += `<rect x="${X(first).toFixed(1)}" y="0" width="${(X(end) - X(first)).toFixed(1)}" height="${bot}" class="tp-win"/><text x="${(X(first) + 4).toFixed(1)}" y="10" class="tp-wl">DAWN PATROL</text>`;
+    svg += `<defs><linearGradient id="tpFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--tide)" stop-opacity=".3"/><stop offset="1" stop-color="var(--tide)" stop-opacity=".02"/></linearGradient></defs>`;
+    svg += `<path d="${d}L${W} ${bot}L0 ${bot}Z" fill="url(#tpFill)"/><path d="${d}" class="tp-line"/>`;
+    [0, 6, 12, 18, 24].forEach((h) => (svg += `<text x="${X(day0 + h * 60).toFixed(1)}" y="${bot + 30}" text-anchor="${h === 0 ? 'start' : h === 24 ? 'end' : 'middle'}" class="tp-ax">${hourLbl(h % 24)}</text>`));
+    svg += `<line x1="0" x2="${W}" y1="${bot + 0.5}" y2="${bot + 0.5}" class="tp-base"/>`;
+    const todays = list.filter((e) => e.m >= day0 && e.m < day1);
+    todays.forEach((e) => {
+      const x = X(e.m), y = Y(e.h), anchor = x < 26 ? 'start' : x > W - 26 ? 'end' : 'middle';
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" class="tp-dot"/><text x="${x.toFixed(1)}" y="${(e.hi ? y - 8 : y + 15).toFixed(1)}" text-anchor="${anchor}" class="tp-lbl">${shortClock(e.t)}</text>`;
+    });
+    const nowM = toMin(nowStr());
+    if (nowM >= day0 && nowM < day1) svg += `<line x1="${X(nowM).toFixed(1)}" x2="${X(nowM).toFixed(1)}" y1="0" y2="${bot}" class="tp-now"/>`;
+    $('.tp-body', el).innerHTML = `<svg class="tp-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tide curve for ${dm(date)}">${svg}</svg>
+      <ul class="tp-list">${todays.map((e) => `<li class="${e.hi ? 'hi' : 'lo'}">${tideIcon(e.hi)}<span>${e.hi ? 'High' : 'Low'}</span><b>${clock(e.t)}</b><em>${e.h.toFixed(2)} m</em></li>`).join('')}
+        <li class="sun">${sunIcon(false)}<span>Sunrise</span><b>${clock(sun.rise)}</b><em></em></li><li class="sun">${sunIcon(true)}<span>Sunset</span><b>${clock(sun.set)}</b><em></em></li></ul>
+      <p class="tp-src">${esc(port.name)} predictions, metres above lowest astronomical tide.</p>`;
+  }
+
+  /* ---------------- Spot guide + cams (spot page) ---------------- */
+  const GUIDE_ROWS = [['paddle', 'Paddling out'], ['hazards', 'Hazards'], ['crowd', 'Crowd'], ['access', 'Access'], ['tip', 'On the log']];
+  function guideBlock(s) {
+    const g = (window.DAWNIE_GUIDES || {})[s.id];
+    if (!g) return '';
+    const rows = GUIDE_ROWS.filter(([k]) => g[k]).map(([k, t]) => `<div class="g-row g-${k}"><dt>${t}</dt><dd>${esc(g[k])}</dd></div>`).join('');
+    const cams = (g.cams || []).map((c) => `<a class="cam" href="${esc(c.url)}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6.5" width="13" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 10.5l5-3v9l-5-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>${esc(c.name)}</span>
+        <svg class="ext" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`).join('');
+    return `<section class="d-sec">
+        <div class="d-sec-head"><h2>Spot guide</h2><span>For a learner on a log</span></div>
+        <dl class="guide">${rows}</dl>
+        <div class="d-sec-head d-sec-head--sub"><h2>Live cams</h2><span>Opens the provider’s site</span></div>
+        ${cams ? `<div class="cams">${cams}</div>` : '<p class="tp-msg">No free cam found for this break.</p>'}
+        ${g.camNote ? `<p class="fine cam-note">${esc(g.camNote)}</p>` : ''}
+      </section>`;
   }
 
   /* ---------------- Buoy check ---------------- */
@@ -686,7 +1150,7 @@
   }
 
   /* ---------------- Data sources ---------------- */
-  const SOURCES = { marine: ['Swell', 'Open-Meteo Marine'], wind: ['Wind', 'Open-Meteo'], tides: ['Tides', 'Maritime Safety Qld'], buoys: ['Buoys', 'Qld Coastal Data System'] };
+  const SOURCES = { marine: ['Swell', 'Open-Meteo Marine'], wind: ['Wind', 'Open-Meteo'], ext: ['Outlook', 'GFS + ECMWF models'], tides: ['Tides', 'Maritime Safety Qld'], buoys: ['Buoys', 'Qld Coastal Data System'] };
   function renderSources() {
     const at = raw && raw.fetchedAt ? whenStr(bneStr(raw.fetchedAt)) : '';
     let latest = '';
@@ -705,18 +1169,28 @@
   /* ================================================================
      RENDER — SPOT DETAIL
      ================================================================ */
+  const tabFromHash = () => (location.hash.startsWith('#/outlook') ? 'outlook' : location.hash.startsWith('#/map') ? 'map' : 'today');
+  let lastSpot = null;
   function route() {
     const m = location.hash.match(/^#\/spot\/([\w-]+)/);
     const home = $('#home'), det = $('#detail');
     if (m && model) {
       const sp = model.spots.find((s) => s.spot.id === m[1]);
       if (sp) {
+        if (lastSpot !== sp.spot.id) { ui.tableAll = false; ui.tideDate = null; lastSpot = sp.spot.id; }
         home.hidden = true; det.hidden = false;
+        document.body.classList.add('on-detail');
         renderDetail(sp);
         return;
       }
     }
+    lastSpot = null;
     det.hidden = true; home.hidden = false;
+    document.body.classList.remove('on-detail');
+    const tab = tabFromHash();
+    document.querySelectorAll('.pane').forEach((p) => (p.hidden = p.dataset.pane !== tab));
+    document.querySelectorAll('#tabbar a').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    if (model) renderPanes();
   }
 
   const TYPE = { point: 'Point break', beach: 'Beach break', reef: 'Reef break' };
@@ -755,7 +1229,7 @@
   function renderDetail(sp) {
     const s = sp.spot, el = $('#detail');
     const port = C.tides[s.tidePort].name;
-    const mornings = morningDates().map((d) => morningFor(sp, d)).filter(Boolean);
+    const mornings = morningDates(3).map((d) => morningFor(sp, d)).filter(Boolean);
     const win = `${cmp(s.swell.ideal - s.swell.spread)}–${cmp(s.swell.ideal + s.swell.spread)}`;
     el.innerHTML = `
       <div class="d-top">
@@ -782,7 +1256,7 @@
           const b = m.best;
           return `
           <article class="morning" style="--c:${colour(b)}">
-            <div class="m-day">${dayShort(m.date)}<span>${dm(m.date)}</span></div>
+            <div class="m-day">${dayShort(m.date)}<span>${dm(m.date)}</span>${confDots(confidence(m))}</div>
             <div class="m-rate">${label(b)}</div>
             <div class="m-strip" aria-hidden="true">${m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="background:${colour(h)}"></i>`).join('')}</div>
             <div class="m-sub"><span>${f1(b.surf)}<small>m</small> ${Math.round(b.period)}<small>s</small></span>
@@ -792,7 +1266,7 @@
         </div>
       </section>
       <section class="d-sec">
-        <div class="d-sec-head d-sec-head--seg"><h2>Next 7 days</h2>
+        <div class="d-sec-head d-sec-head--seg"><h2>Next ${C.outlook.days} days</h2>
           <div class="seg" role="group" aria-label="View">
             <button data-view="charts" aria-pressed="${ui.view === 'charts'}">Charts</button>
             <button data-view="table" aria-pressed="${ui.view === 'table'}">Table</button>
@@ -801,7 +1275,13 @@
         ${ui.view === 'charts' ? chartBlock(sp) + '<div class="d-sec-head d-sec-head--sub"><h2>Hour by hour</h2><span>Brisbane time</span></div>' : ''}
         ${tableBlock(sp)}
       </section>
+      <section class="d-sec">
+        <div class="d-sec-head"><h2>Tide planner</h2><span>Any date</span></div>
+        <div id="tideplan" class="tideplan"></div>
+      </section>
+      ${guideBlock(s)}
     `;
+    renderTidePlanner(sp);
     const sc = $('.chart-scroll', el);
     if (sc) {
       // Fade a day label out as its column scrolls away, rather than showing a clipped fragment.
@@ -938,6 +1418,10 @@
       });
     }
 
+    // trend days: veil them so the eye reads them as rough guidance
+    const tDay = days.find(isTrend);
+    if (tDay) { const x = Math.max(0, xm(toMin(tDay)) - PX / 2); svg += `<rect x="${x.toFixed(1)}" y="16" width="${(W - x).toFixed(1)}" height="${H - 16}" class="c-trend"/>`; }
+
     // now: dim the past, accent line + pill
     if (nowIn) {
       svg += `<rect x="0" y="0" width="${nowX.toFixed(1)}" height="${H}" class="c-past"/>`;
@@ -948,16 +1432,16 @@
     // HTML day header row (labels stick to the left edge while scrolling)
     const dayRow = days.map((d) => {
       const n = hrs.filter((h) => h.date === d).length, b = bests[d];
-      return `<div class="cd" style="width:${n * PX}px"><div class="cd-in"><b>${dayShort(d)}</b><span class="cd-d">${dm(d)}</span>${b && n >= 14 ? `<span class="cd-r" style="--c:${colour(b)}">${label(b)}</span>` : ''}</div></div>`;
+      return `<div class="cd${isTrend(d) ? ' trend' : ''}" style="width:${n * PX}px"><div class="cd-in"><b>${dayShort(d)}</b><span class="cd-d">${dm(d)}</span>${b && n >= 14 ? `<span class="cd-r" style="--c:${colour(b)}">${label(b)}</span>` : ''}${isTrend(d) && n >= 14 ? '<span class="cd-t">trend</span>' : ''}</div></div>`;
     }).join('');
 
     const lane = (name, unit, y, extra = '') => `<div class="cl" style="top:${DR + y - 1}px">${name}</div>${unit ? `<div class="cl-u" style="top:${DR + y + 10}px">${unit}</div>` : ''}${extra}`;
     const surfTicks = ticks.map((v) => `<div class="cl-t" style="top:${(DR + sy(v) - 6).toFixed(0)}px">${v}</div>`).join('');
     return `<figure class="chart-wrap" style="--dr:${DR}px">
-      <div class="chart-scroll" data-now="${nowX.toFixed(0)}" tabindex="0" aria-label="7-day hourly chart, scroll sideways">
+      <div class="chart-scroll" data-now="${nowX.toFixed(0)}" tabindex="0" aria-label="${C.outlook.days}-day hourly chart, scroll sideways">
         <div class="chart-inner" style="width:${W}px">
           <div class="chart-days">${dayRow}</div>
-          <svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hourly surf height, swell period, wind and tide for the next 7 days">${svg}</svg>
+          <svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hourly surf height, swell period, wind and tide for the next ${C.outlook.days} days">${svg}</svg>
         </div>
       </div>
       <div class="chart-labels" aria-hidden="true">
@@ -977,7 +1461,9 @@
   function tableBlock(sp) {
     const today = nowStr().slice(0, 10);
     const nowH = nowStr().slice(0, 13);
-    const days = [...new Set(sp.hours.map((h) => h.date))].filter((d) => d >= today);
+    const allDays = [...new Set(sp.hours.map((h) => h.date))].filter((d) => d >= today);
+    const days = ui.tableAll ? allDays : allDays.filter((d) => !isTrend(d));
+    const more = allDays.length - days.length;
     const turns = tideTurns(sp);
     const cols = '<colgroup><col class="c-t"><col class="c-r"><col class="c-s"><col class="c-w"><col class="c-wi"><col class="c-ti"></colgroup>';
     return `<div class="tbl-wrap">${days.map((d) => {
@@ -1017,25 +1503,39 @@
             <span class="tday-best" style="--c:${colour(best)}">Best <b>${label(best)}</b> ${hourLbl(best.hour)}</span></div>
           <div class="tcols" aria-hidden="true"><span>Time</span><span>Rating</span><span>Surf</span><span>Swell</span><span>Wind<i>km/h</i></span><span>Tide<i>m</i></span></div>
         </header>
-        <table class="tbl">${cols}
+        <table class="tbl${isTrend(d) ? ' trend' : ''}">${cols}
           <thead class="sr"><tr><th>Time</th><th>Rating</th><th>Surf (m)</th><th>Swell</th><th>Wind and gust (km/h)</th><th>Tide (m)</th></tr></thead>
           <tbody>${body}</tbody></table>
       </section>`;
-    }).join('')}</div>`;
+    }).join('')}${more ? `<button class="more-btn" data-table-all>Show ${more} more days <span>trend only</span></button>` : ''}</div>`;
   }
 
   /* ================================================================
      EVENTS
      ================================================================ */
   let homeScroll = 0, cameFromHome = false;
+  const pickDay = (i) => { ui.date = regionRanks(ui.region).dates[i] || null; };
+  const curSpot = () => { const m = location.hash.match(/^#\/spot\/([\w-]+)/); return m && model ? model.spots.find((s) => s.spot.id === m[1]) : null; };
   document.addEventListener('click', (e) => {
     const t = e.target;
     const reg = t.closest('.region button');
-    if (reg) { ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.day = 0; renderHome(); swapIn(); return; }
+    if (!model && (reg || t.closest('.day,[data-goday],[data-mday]'))) return; // nothing to switch yet
+    if (reg) { ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.date = null; renderHome(); swapIn(); return; }
     const day = t.closest('.day');
-    if (day) { if (+day.dataset.i !== ui.day) { ui.day = +day.dataset.i; renderHome(); swapIn(); } return; }
+    if (day) { if (day.dataset.i && +day.dataset.i !== ui.day) { pickDay(+day.dataset.i); renderHome(); swapIn(); } return; }
+    const go = t.closest('[data-goday]');
+    if (go) { pickDay(+go.dataset.goday); homeScroll = 0; location.hash = ''; renderHome(); swapIn(); window.scrollTo(0, 0); return; }
+    const md = t.closest('[data-mday]');
+    if (md) { pickDay(+md.dataset.mday); renderHome(); return; }
+    const layer = t.closest('[data-layer]');
+    if (layer) { ui.windy = layer.dataset.layer; store.set('dawnie:windy', ui.windy); renderWindy(); return; }
+    const guard = t.closest('.windy-guard');
+    if (guard) { $('#windy').classList.add('live'); return; }
+    const step = t.closest('[data-tide-step]');
+    if (step) { ui.tideDate = addDays(ui.tideDate || nowStr().slice(0, 10), +step.dataset.tideStep); const sp = curSpot(); if (sp) renderTidePlanner(sp); return; }
+    if (t.closest('[data-table-all]')) { ui.tableAll = true; const sp = curSpot(); if (sp) { const y = window.scrollY; renderDetail(sp); window.scrollTo(0, y); } return; }
     const spot = t.closest('[data-spot]');
-    if (spot && !$('#home').hidden) { homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${spot.dataset.spot}`; return; }
+    if (spot && !$('#home').hidden && !t.closest('.leaflet-container')) { homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${spot.dataset.spot}`; return; }
     if (t.closest('#back')) {
       // only step back in history if we navigated here from the home screen; otherwise go home
       if (cameFromHome) { cameFromHome = false; history.back(); } else location.hash = '';
@@ -1044,17 +1544,21 @@
     const v = t.closest('[data-view]');
     if (v) {
       ui.view = v.dataset.view; store.set('dawnie:view', ui.view);
-      const m = location.hash.match(/^#\/spot\/([\w-]+)/);
-      const sp = m && model.spots.find((s) => s.spot.id === m[1]);
+      const sp = curSpot();
       if (sp) renderDetail(sp);
       return;
     }
     if (t.closest('#refresh') || t.closest('[data-retry]')) load(true);
   });
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'tide-date' && e.target.value) { ui.tideDate = e.target.value; const sp = curSpot(); if (sp) renderTidePlanner(sp); }
+  });
+  let prevHash = location.hash;
   window.addEventListener('hashchange', () => {
-    const toDetail = location.hash.startsWith('#/spot/');
+    const toDetail = location.hash.startsWith('#/spot/'), fromDetail = prevHash.startsWith('#/spot/');
+    prevHash = location.hash;
     route();
-    window.scrollTo(0, toDetail ? 0 : homeScroll);
+    window.scrollTo(0, toDetail ? 0 : fromDetail ? homeScroll : 0);
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && raw && Date.now() - (raw.fetchedAt || 0) > C.ui.cacheMinutes * 60e3) load(true);
@@ -1062,7 +1566,7 @@
 
   // first paint: skeletons shaped like the real layout, so nothing jumps when data lands
   const sk = (w, h, extra = '') => `<span class="skel" style="width:${w};height:${h}px;${extra}"></span>`;
-  if (!store.get('dawnie:data:v1')) {
+  if (!store.get('dawnie:data:v2')) {
     $('#days').innerHTML = Array.from({ length: 3 }, () => `<div class="day sk-day" aria-hidden="true">${sk('54%', 10)}${sk('72%', 14, 'margin-top:8px')}</div>`).join('');
     $('#hero').innerHTML = `<div class="hero-in sk-hero" aria-hidden="true">${sk('38%', 11)}${sk('52%', 50, 'margin-top:20px;border-radius:12px')}${sk('46%', 22, 'margin-top:10px')}${sk('82%', 12, 'margin-top:16px')}${sk('64%', 12, 'margin-top:7px')}
       <div class="sk-stats">${Array.from({ length: 4 }, () => `<div>${sk('60%', 9)}${sk('78%', 17, 'margin-top:8px')}</div>`).join('')}</div></div>`;

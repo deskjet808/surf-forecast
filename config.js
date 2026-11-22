@@ -6,7 +6,9 @@
      2. SPOTS   – each break: where it is, which way it faces, what it likes
      3. BUOYS   – Queensland Government wave buoys shown in "Buoy check"
      4. TIDES   – Maritime Safety Queensland tide prediction tables
-     5. UI      – display defaults
+     5. OUTLOOK – 16-day length, "days to watch", model confidence
+     6. MAPS    – spot map and Windy view positions
+     7. UI      – display defaults
 
    All directions are compass degrees (0 = N, 90 = E, 180 = S, 270 = W).
    Swell and wind directions are where they come FROM (meteorological).
@@ -217,7 +219,39 @@ window.DAWNIE = {
   },
 
   /* ===========================================================================
-     5. UI
+     5. OUTLOOK + CONFIDENCE
+     ---------------------------------------------------------------------------
+     Days 1–9 come from Open-Meteo's default wave model; after that the GFS
+     wave model fills in to day 16. Confidence compares independent models
+     (waves: default / GFS / ECMWF; wind: default / ECMWF / GFS) over the
+     morning window, then fades with lead time.
+     =========================================================================== */
+  outlook: {
+    days: 16,          // forecast length
+    trendFromDay: 8,   // day 8 onwards is shown faded and labelled "trend"
+    watchMin: 3,       // a day needs at least this rating (3 = Good) to be a "day to watch"
+    watchMax: 3,       // show at most this many days to watch
+  },
+  confidence: {
+    // model spread → disagreement 0..1, linear between [agree, disagree]
+    waveSpread: [0.12, 0.45],   // (max − min) / mean wave height
+    windSpread: [5, 15],        // km/h between models
+    windDirSpread: [30, 100],   // degrees between models (only counted when wind > 8 km/h)
+    // lead-time multiplier: [days ahead, factor]
+    lead: [[0, 1], [3, 0.95], [7, 0.78], [11, 0.58], [15, 0.42]],
+    levels: [0.7, 0.45],        // ≥ first = High, ≥ second = Medium, else Low
+  },
+
+  /* ===========================================================================
+     6. MAPS — spot map tiles and the Windy embed
+     =========================================================================== */
+  maps: {
+    centre: { sc: [-26.60, 153.11, 10], gc: [-28.07, 153.47, 11] },   // lat, lon, zoom
+    windy:  { sc: [-26.6, 153.4, 7],    gc: [-28.0, 153.7, 7] },
+  },
+
+  /* ===========================================================================
+     7. UI
      =========================================================================== */
   ui: {
     defaultRegion: 'sc',

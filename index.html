@@ -48,19 +48,43 @@
     <span class="region-pill" aria-hidden="true"></span>
   </div>
 
-  <nav class="days" id="days" aria-label="Morning"></nav>
+  <div class="pane" id="pane-today" data-pane="today">
+    <nav class="days" id="days" aria-label="Morning"></nav>
 
-  <section id="hero" class="hero" aria-live="polite"></section>
+    <section id="hero" class="hero" aria-live="polite"></section>
 
-  <section class="block">
-    <div class="block-head"><h2>The lineup</h2><span class="block-meta" id="window-meta"></span></div>
-    <ol id="ranking" class="ranking"></ol>
-  </section>
+    <section class="block summary" id="summary" aria-live="polite"></section>
 
-  <section class="block">
-    <div class="block-head"><h2>Buoy check</h2><span class="block-meta">Live vs forecast</span></div>
-    <div id="buoys" class="buoys"></div>
-  </section>
+    <section class="block">
+      <div class="block-head"><h2>The lineup</h2><span class="block-meta" id="window-meta"></span></div>
+      <ol id="ranking" class="ranking"></ol>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><h2>Buoy check</h2><span class="block-meta">Live vs forecast</span></div>
+      <div id="buoys" class="buoys"></div>
+    </section>
+  </div>
+
+  <div class="pane" id="pane-outlook" data-pane="outlook" hidden></div>
+
+  <div class="pane" id="pane-map" data-pane="map" hidden>
+    <section class="block">
+      <div class="block-head"><h2>Spot map</h2><span class="block-meta" id="map-meta"></span></div>
+      <nav class="mini-days" id="map-days" aria-label="Morning"></nav>
+      <div class="map-card"><div id="spotmap" class="spotmap" role="application" aria-label="Map of surf spots"></div></div>
+    </section>
+    <section class="block">
+      <div class="block-head"><h2>Live maps</h2><span class="block-meta">Windy</span></div>
+      <div class="seg seg--wide" id="windy-seg" role="group" aria-label="Map layer">
+        <button data-layer="waves" aria-pressed="true">Swell</button>
+        <button data-layer="wind" aria-pressed="false">Wind</button>
+        <button data-layer="rain" aria-pressed="false">Rain</button>
+      </div>
+      <div class="windy" id="windy"></div>
+      <p class="fine map-fine">Animated forecast maps by Windy.com. For rain radar, the <a href="https://www.bom.gov.au/weather-and-climate/rain-radar-and-weather-maps?radar=66-brisbane-(mt-stapylton)" target="_blank" rel="noopener">BoM Brisbane radar</a> is the one to trust.</p>
+    </section>
+  </div>
 
   <footer class="foot">
     <h2 class="foot-label">Data</h2>
@@ -72,7 +96,20 @@
 
 <main id="detail" class="view" hidden></main>
 
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <a href="#" data-tab="today" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="11.5" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 18.5c2.2 0 2.2-1.6 4.5-1.6s2.3 1.6 4.5 1.6 2.3-1.6 4.5-1.6 2.3 1.6 4.5 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 3.5v1.6M5.6 6.1l1.1 1.1M18.4 6.1l-1.1 1.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <span>Today</span></a>
+  <a href="#/outlook" data-tab="outlook">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.5 16.5v-4M10 16.5v-8M13.5 16.5v-6M17 16.5v-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <span>Outlook</span></a>
+  <a href="#/map" data-tab="map">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    <span>Map</span></a>
+</nav>
+
 <script src="config.js"></script>
+<script src="guides.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

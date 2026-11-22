@@ -1,7 +1,7 @@
 // Surf Cowabunga service worker: caches the app shell so it opens instantly and offline.
 // Forecast data is cached by the app itself (localStorage), so API calls pass through.
-const CACHE = 'dawnie-v4';
-const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png'];
+const CACHE = 'dawnie-v5';
+const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'guides.js', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png'];
 const NET_TIMEOUT = 3000; // weak beach signal: fall back to the cached shell after 3 s
 
 self.addEventListener('install', (e) => {
@@ -14,12 +14,12 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const sameOrigin = url.origin === location.origin;
-  const isFont = url.hostname.endsWith('gstatic.com') || url.hostname.endsWith('googleapis.com');
+  const isFont = url.hostname.endsWith('gstatic.com') || url.hostname.endsWith('googleapis.com') || url.hostname === 'cdnjs.cloudflare.com'; // fonts + pinned Leaflet build
   if (!sameOrigin && !isFont) return; // live data: straight to network
 
   if (isFont) { // fonts never change: cache first
     e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-      const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return res;
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); } return res;
     })));
     return;
   }
