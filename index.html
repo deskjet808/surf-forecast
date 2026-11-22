@@ -7,12 +7,14 @@
 <meta name="description" content="Longboard dawn-patrol forecast for the Sunshine Coast and Gold Coast.">
 <meta name="theme-color" content="#06090c">
 <meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dawnie">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +26,7 @@
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
+<div class="statusbar-scrim" aria-hidden="true"></div>
 
 <main id="home" class="view">
   <header class="top">
@@ -34,8 +37,8 @@
         <p class="sub" id="updated">Loading the lineup…</p>
       </div>
     </div>
-    <button class="icon-btn" id="refresh" aria-label="Refresh forecast">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <button class="icon-btn refresh" id="refresh" aria-label="Refresh forecast" aria-busy="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><g class="ic-refresh" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12a7 7 0 1 1-2.05-4.95"/><path d="M16.95 3.5v3.55H13.4"/></g><path class="ic-check" d="M7.5 12.4l3 3 6-6.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
   </header>
 
@@ -60,8 +63,10 @@
   </section>
 
   <footer class="foot">
-    <ul id="sources" class="sources"></ul>
-    <p>Forecast is a model, not a promise — always check it with your own eyes. Tides are Maritime Safety Queensland predictions (metres above lowest astronomical tide). Times are Brisbane (AEST).</p>
+    <h2 class="foot-label">Data</h2>
+    <ul id="sources" class="sources" aria-live="polite"></ul>
+    <p class="fine">Forecast is a model, not a promise — always check it with your own eyes. Tides are Maritime Safety Queensland predictions (metres above lowest astronomical tide). Buoy heights are significant wave height (Hs). All times Brisbane (AEST).</p>
+    <p class="sig"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32.96" r="11.2" fill="currentColor" clip-path="url(#sig-c)"/><clipPath id="sig-c"><rect width="64" height="33.4"/></clipPath><path d="M13.8 39.3c3 0 3-3 6.1-3s3 3 6 3 3-3 6.1-3 3 3 6 3 3-3 6.1-3 3 3 6 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Dawnie · for the dawn patrol</p>
   </footer>
 </main>
 
