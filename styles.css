@@ -685,3 +685,4 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 .morning .m-sub > span { white-space: nowrap; }
+.morning .m-sub > span > .unit { display: inline; }
