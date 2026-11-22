@@ -229,8 +229,9 @@ window.DAWNIE = {
     /* --- GO / MAYBE / SKIP verdict at the top of the home hero.
            Based on the rating (1 Poor … 5 Epic) of the best spot in the region
            for the selected morning:  rating ≥ go → Go,  ≥ maybe → Maybe,  else Skip.
+           Lined up with the rating words: Good or better = Go, Fair = Maybe, Poor = Skip.
            'Too big' and 'Flat' are always Skip. */
-    verdict: { go: 4, maybe: 3 },
+    verdict: { go: 3, maybe: 2 },
 
     /* One-line taglines under the verdict. The first matching situation wins
        (see `tagline()` in app.js):

@@ -29,6 +29,12 @@
   // "6:10am", "yesterday 6:10am" or "20/11 6:10am" — for timestamps in the past.
   const whenStr = (s) => { const t = nowStr().slice(0, 10), d = s.slice(0, 10); return (d === t ? '' : d === addDays(t, -1) ? 'yesterday ' : dm(d) + ' ') + clock(s); };
   const agoStr = (min) => (min < 2 ? 'just now' : min < 60 ? `${min} min ago` : min < 600 ? `${Math.floor(min / 60)} h${min % 60 >= 10 ? ' ' + (min % 60) + ' min' : ''} ago` : `${Math.round(min / 60)} h ago`);
+  // One day-label style everywhere: eyebrow Today / Tomorrow / weekday name, sub-line "Wed 25/11".
+  const dayLabel = (d) => { const n = dayName(d); return { top: n === wd(d) ? LONGDAY[wd(d)] : n, sub: `${wd(d)} ${dm(d)}` }; };
+  const clockExact = (s) => { const h = +s.slice(11, 13); return (h % 12 || 12) + ':' + s.slice(14, 16) + (h < 12 ? 'am' : 'pm'); };
+  // Units: number + narrow no-break (thin) space + smaller muted unit.
+  const TS = '\u202f'; // narrow no-break space, so a unit never wraps away from its number
+  const U = (n, unit) => `${n}${TS}<span class="unit">${unit}</span>`;
   const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------------- Maths ---------------- */
@@ -245,20 +251,20 @@
     if (h.flag === 'flat') {
       const open = h.sw.h || 0;
       parts.push(open >= 0.6 && h.main && h.main.ex < 0.35
-        ? `${f1(open)} m ${cmp(h.sw.d)} swell won't wrap in`
-        : `tiny, about ${f1(h.surf)} m`);
+        ? `${f1(open)}${TS}m ${cmp(h.sw.d)} swell won't wrap in`
+        : `tiny, about ${f1(h.surf)}${TS}m`);
     } else if (h.flag === 'big') {
-      parts.push(`${f1(h.surf)} m, too big for longboarding`);
+      parts.push(`${f1(h.surf)}${TS}m, too big for longboarding`);
     } else {
       const adj = h.chop > 0.12 ? 'choppy ' : h.wI.sc > 0.85 && h.chop < 0.05 ? 'clean ' : '';
-      parts.push(`${adj}${f1(h.surf)} m ${cmp(h.main ? h.main.d : h.sw.d)} @ ${Math.round(h.period)} s`);
+      parts.push(`${adj}${f1(h.surf)}${TS}m ${cmp(h.main ? h.main.d : h.sw.d)} @ ${Math.round(h.period)}${TS}s`);
     }
     const w = h.wind, s = Math.round(w.s), light = h.wI.light ? 'light ' : '';
     parts.push(
       h.wI.cat === 'glassy' ? 'glassy'
         : h.wI.cat === 'offshore' ? `${light}${cmp(w.d)} offshore`
-          : h.wI.cat === 'cross' ? `${light}${cmp(w.d)} cross-shore ${s} km/h`
-            : `${light}${cmp(w.d)} onshore ${s} km/h`);
+          : h.wI.cat === 'cross' ? `${light}${cmp(w.d)} cross-shore ${s}${TS}km/h`
+            : `${light}${cmp(w.d)} onshore ${s}${TS}km/h`);
     return parts;
   }
 
@@ -496,10 +502,10 @@
 
     $('#days').innerHTML = dates.map((d, i) => {
       const top = ranks[i][0];
-      const named = dayName(d) !== wd(d);
+      const L = dayLabel(d);
       return `<button class="day" role="tab" data-i="${i}" aria-selected="${i === ui.day}"${top ? ` style="--c:${colour(top.m.best)}"` : ''}>
-        <span class="d1">${named ? dayName(d) : LONGDAY[wd(d)]}</span>
-        <span class="d2">${named ? wd(d) + ' ' : ''}${dm(d)}</span>
+        <span class="d1">${L.top}</span>
+        <span class="d2">${L.sub}</span>
         <span class="d3">${top ? label(top.m.best) : '–'}</span>
       </button>`;
     }).join('');
@@ -516,18 +522,29 @@
     // favourites pinned to the top (keeping their score rank number)
     const ranked = list.map((x, i) => ({ ...x, rank: i + 1 }));
     const pinned = ranked.filter((x) => isFav(x.sp.spot.id));
-    const ordered = [...pinned, ...ranked.filter((x) => !isFav(x.sp.spot.id))];
-    $('#ranking').innerHTML = ordered.map(({ sp, m, rank }, i) => {
+    const rest = ranked.filter((x) => !isFav(x.sp.spot.id));
+    // 3+ flat spots (never favourites) fold into one dimmed row that expands on tap
+    const flats = rest.filter((x) => x.m.best.flag === 'flat');
+    const fold = flats.length >= 3;
+    const ordered = [...pinned, ...(fold ? rest.filter((x) => !flats.includes(x)) : rest)];
+    const rowHtml = ({ sp, m, rank }, i, extra = '') => {
       const b = m.best, fav = isFav(sp.spot.id);
       const bars = m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="--c:${colour(h)};--v:${barH(h)}"></i>`).join('');
-      return `<li class="row${fav ? ' is-fav' : ''}${fav && i === pinned.length - 1 ? ' fav-last' : ''}" data-spot="${sp.spot.id}" style="--i:${i}">
+      return `<li class="row${fav ? ' is-fav' : ''}${fav && i === pinned.length - 1 ? ' fav-last' : ''}${extra}" data-spot="${sp.spot.id}" style="--i:${i}">
         <span class="rank">${String(rank).padStart(2, '0')}</span>
         <span class="name"><span class="nm">${esc(sp.spot.name)}</span>${starBtn(sp.spot.id, sp.spot.name)}</span>
         <span class="pill" style="--c:${colour(b)}">${label(b)}</span>
         <span class="why">${esc(cap([...why(b), ...(b.tide ? [tideWord(b.tide)] : [])].join(', ')))}</span>
         <span class="strip" aria-label="Best at ${hourLbl(b.hour)}, window ${hourLbl(m.hrs[0].hour)} to ${hourLbl(m.hrs[m.hrs.length - 1].hour)}"><span class="spark-m" aria-hidden="true">${bars}</span>${tideSpark(m)}<span class="row-wind" style="color:${windCol(b.wI.cat)}" title="${cmp(b.wind.d)} ${b.wI.cat} ${Math.round(b.wind.s)} km/h">${b.wI.cat === 'glassy' ? '<i class="calm"></i>' : arrow(b.wind.d, 'currentColor', 11)}<span>${Math.round(b.wind.s)}</span></span><span class="at">best <b>${hourLbl(b.hour)}</b></span></span>
       </li>`;
-    }).join('');
+    };
+    let html = ordered.map((x, i) => rowHtml(x, i)).join('');
+    if (fold) {
+      const open = !!ui.flatOpen;
+      html += `<li class="flat-more" style="--i:${ordered.length}"><button data-flat-toggle aria-expanded="${open}"><span class="fm-dot" aria-hidden="true"></span><span>${open ? 'Hide ' + flats.length : flats.length + ' more'} spots flat</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></li>`;
+      if (open) html += flats.map((x, k) => rowHtml(x, ordered.length + 1 + k, ' is-flat')).join('');
+    }
+    $('#ranking').innerHTML = html;
 
     renderBuoys();
     renderSources();
@@ -582,20 +599,20 @@
     const { sp, m } = top, b = m.best;
     el.style.setProperty('--c', colour(b));
     el.dataset.spot = sp.spot.id;
-    const tide = b.tide ? `${f1(b.tide.h)}<small> m</small>` : '–';
+    const tide = b.tide ? U(f1(b.tide.h), 'm') : '–';
     const tideArrow = (up) => `<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" style="color:var(--tide)"><path d="M6 ${up ? '10V2M2.5 5.5 6 2l3.5 3.5' : '2v8M2.5 6.5 6 10l3.5-3.5'}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const v = verdict(b);
     el.innerHTML = `<div class="hero-in">
         <div class="verdict is-${v}"><span class="v-word">${VERDICT[v]}</span><span class="v-tag">${esc(tagline(b, v))}</span></div>
-        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayName(date)} · ${hourLbl(b.hour)}</span></div>
+        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayLabel(date).top} · ${hourLbl(b.hour)}</span></div>
         <div class="hero-rating">${label(b)}</div>
         <div class="hero-name">${esc(sp.spot.name)}</div>
         <p class="hero-why">${esc(cap(why(b).join(', ')))}.</p>
         ${timeline(m)}
         <div class="stats">
-          <div class="stat"><div class="k">Surf</div><div class="v">${f1(b.surf)}<small> m</small></div><div class="s">${cmp(b.main ? b.main.d : b.sw.d)}</div></div>
-          <div class="stat"><div class="k">Period</div><div class="v">${Math.round(b.period)}<small> s</small></div><div class="s">${b.sw2.h > 0.2 ? '+' + f1(b.sw2.h) + ' m ' + cmp(b.sw2.d) : 'swell'}</div></div>
-          <div class="stat"><div class="k">Wind</div><div class="v">${Math.round(b.wind.s)}<small> km/h</small></div><div class="s" style="color:${windCol(b.wI.cat)}">${cmp(b.wind.d)} ${{ offshore: 'off', onshore: 'on' }[b.wI.cat] || b.wI.cat}</div></div>
+          <div class="stat"><div class="k">Surf</div><div class="v">${U(f1(b.surf), 'm')}</div><div class="s">${cmp(b.main ? b.main.d : b.sw.d)}</div></div>
+          <div class="stat"><div class="k">Period</div><div class="v">${U(Math.round(b.period), 's')}</div><div class="s">${b.sw2.h > 0.2 ? `+${f1(b.sw2.h)}${TS}m ${cmp(b.sw2.d)}` : `${cmp(b.sw.d)} swell`}</div></div>
+          <div class="stat"><div class="k">Wind</div><div class="v">${U(Math.round(b.wind.s), 'km/h')}</div><div class="s" style="color:${windCol(b.wI.cat)}">${cmp(b.wind.d)} ${{ offshore: 'off', onshore: 'on' }[b.wI.cat] || b.wI.cat}</div></div>
           <div class="stat"><div class="k">Tide</div><div class="v">${tide}</div><div class="s">${b.tide ? tideArrow(b.tide.rising) + (b.tide.rising ? 'rising' : 'falling') : ''}</div></div>
         </div>
       </div>`;
@@ -609,6 +626,7 @@
   /* ---------------- Buoy check ---------------- */
   // The Qld feed normally lags the clock by 1–3 h, so "fresh" is generous.
   const BUOY_FRESH = 240, BUOY_STALE = 720; // minutes
+  const BUOY_AGE_WARN = 90; // the "x min ago" text turns amber past this
 
   // Model value at a Brisbane timestamp, linearly between hourly steps.
   function fcAt(fc, key, t) {
@@ -661,6 +679,7 @@
       const fc = model.buoyFc[i];
       const ageMin = Math.max(0, Math.round(nowM - toMin(last.t)));
       const ageCls = ageMin <= BUOY_FRESH ? 'ok' : ageMin <= BUOY_STALE ? 'warn' : 'err';
+      const ageWarn = ageMin > BUOY_AGE_WARN;
       const fH = fcAt(fc, 'wave_height', last.t), fP = fcAt(fc, 'swell_wave_period', last.t), fD = fcAt(fc, 'wave_direction', last.t);
       let vs = '';
       if (fH) {
@@ -673,19 +692,19 @@
       const sst = sstRow ? sstRow.sst : null;
       const stat = (k, v, m) => `<div><dt>${k}</dt><dd>${v}</dd><dd class="m">${m}</dd></div>`;
       return `<article class="buoy">
-        <div class="buoy-head"><h3>${esc(b.name)}</h3><span class="age is-${ageCls}" title="Latest reading ${whenStr(last.t)}"><i></i>${clock(last.t)} · ${agoStr(ageMin)}</span></div>
+        <div class="buoy-head"><h3>${esc(b.name)}</h3><span class="age is-${ageCls}" title="Latest reading ${whenStr(last.t)}"><i></i>${clockExact(last.t)} · <span class="age-ago${ageWarn ? ' is-old' : ''}">${agoStr(ageMin)}</span></span></div>
         <div class="buoy-main">
           <div class="buoy-now">
-            <div class="buoy-big"><span>${last.hs.toFixed(2)}</span><small>m</small></div>
-            <div class="buoy-cap">${fH ? `Model <b>${fH.toFixed(2)} m</b>` : 'No model for this hour'}</div>
+            <div class="buoy-big">${U(last.hs.toFixed(2), 'm')}</div>
+            <div class="buoy-cap">${fH ? `Model <b>${U(fH.toFixed(2), 'm')}</b>` : 'No model for this hour'}</div>
           </div>
           ${vs}
         </div>
         <dl class="buoy-stats">
-          ${stat('Trend', tr ? `<span class="trend is-${tr.k}">${trendIcon(tr.k)}${TREND[tr.k][0]}</span>` : '–', tr ? `${tr.d >= 0 ? '+' : '−'}${Math.abs(tr.d).toFixed(2)} m / 3 h` : 'not enough data')}
-          ${stat('Period', last.tp ? `${last.tp.toFixed(1)}<small> s</small>` : '–', `model ${fP ? fP.toFixed(1) + ' s' : '–'}`)}
-          ${stat('From', cmp(last.dir), `model ${cmp(fD)}`)}
-          ${sst != null ? stat('Sea', `${sst.toFixed(1)}<small>°C</small>`, 'surface') : ''}
+          ${stat('Trend', tr ? `<span class="trend is-${tr.k}">${trendIcon(tr.k)}${TREND[tr.k][0]}</span>` : '–', tr ? `${tr.d >= 0 ? '+' : '−'}${Math.abs(tr.d).toFixed(2)}${TS}m/3h` : 'Not enough data')}
+          ${stat('Period', last.tp ? U(last.tp.toFixed(1), 's') : '–', `Model ${fP ? fP.toFixed(1) + TS + 's' : '–'}`)}
+          ${stat('From', cmp(last.dir), `Model ${cmp(fD)}`)}
+          ${sst != null ? stat('Sea', U(sst.toFixed(1), '°C'), 'Surface') : ''}
         </dl>
         ${sparkline(obs, fc, b.site)}
       </article>`;
@@ -725,7 +744,7 @@
           </svg>
           <span class="spark-dot" style="top:${((Y(hs[hs.length - 1]) / H) * 100).toFixed(1)}%"></span>
         </div>
-        <div class="spark-y" aria-hidden="true">${ticks.map((v, i) => `<span style="top:${((Y(v) / H) * 100).toFixed(1)}%">${v.toFixed(dec)}${i === ticks.length - 1 ? ' m' : ''}</span>`).join('')}</div>
+        <div class="spark-y" aria-hidden="true">${ticks.map((v, i) => `<span style="top:${((Y(v) / H) * 100).toFixed(1)}%">${v.toFixed(dec)}${i === ticks.length - 1 ? TS + 'm' : ''}</span>`).join('')}</div>
         <div class="spark-x" aria-hidden="true"><span>${clock(obs[0].t)}</span><span>${clock(midT)}</span><span>${clock(obs[obs.length - 1].t)}</span></div>
       </div>
     </figure>`;
@@ -741,7 +760,7 @@
       if (s === 'pending') return 'Checking…';
       if (s === 'err') return 'Unavailable';
       if (s === 'warn') return k === 'tides' && raw && raw.tidesFallback ? 'Model estimate' : `Saved${at ? ' · ' + at : ''}`;
-      if (k === 'buoys') return latest ? `Latest ${whenStr(latest)}` : 'Live';
+      if (k === 'buoys') return latest ? `Latest ${whenStr(latest).replace(clock(latest), clockExact(latest))}` : 'Live';
       return isOffline() && at ? `Saved · ${at}` : 'Live';
     };
     $('#sources').innerHTML = Object.entries(status).map(([k, s]) =>
@@ -767,8 +786,6 @@
 
   const TYPE = { point: 'Point break', beach: 'Beach break', reef: 'Reef break' };
   const TIDE_PREF = { low: 'Low', lowmid: 'Low–mid', mid: 'Mid', midhigh: 'Mid–high', high: 'High', all: 'Any' };
-  const shortClock = (s) => clock(s).replace(/(a|p)m$/, '$1');
-  const dayShort = (d) => { const n = dayName(d); return n === wd(d) ? wd(d) : n; };
 
   // Compass rose: swell window wedge, offshore wind marker, facing direction.
   function compassGlyph(s) {
@@ -829,10 +846,10 @@
           const b = m.best;
           return `
           <article class="morning" style="--c:${colour(b)}">
-            <div class="m-day">${dayShort(m.date)}<span>${dm(m.date)}</span></div>
+            <div class="m-day">${dayLabel(m.date).top}<span>${dayLabel(m.date).sub}</span></div>
             <div class="m-rate">${label(b)}</div>
             <div class="m-strip" aria-hidden="true">${m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="background:${colour(h)}"></i>`).join('')}</div>
-            <div class="m-sub"><span>${f1(b.surf)}<small>m</small> ${Math.round(b.period)}<small>s</small></span>
+            <div class="m-sub"><span>${U(f1(b.surf), 'm')} ${U(Math.round(b.period), 's')}</span>
               <span>${hourLbl(b.hour)}<em style="color:${windCol(b.wI.cat)}">${arrow(b.wind.d, 'currentColor', 10)}${Math.round(b.wind.s)}</em></span></div>
           </article>`;
         }).join('')}
@@ -849,6 +866,9 @@
         ${tableBlock(sp)}
       </section>
     `;
+    // rows scroll to just below the sticky day header (its height varies with the tide curve)
+    const th = $('.tday-h', el);
+    if (th) $('.tbl-wrap', el).style.setProperty('--th', th.offsetHeight + 'px');
     const sc = $('.chart-scroll', el);
     if (sc) {
       // Fade a day label out as its column scrolls away, rather than showing a clipped fragment.
@@ -1009,7 +1029,7 @@
         const x = xm(e.m), y = ty(clamp(e.h, tlo, thi));
         const anchor = x < 30 ? 'start' : x > W - 30 ? 'end' : 'middle';
         svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" class="c-tide-d"/>`;
-        svg += `<text x="${x.toFixed(1)}" y="${(e.hi ? y - 6 : y + 12).toFixed(1)}" text-anchor="${anchor}" class="c-tide-t">${shortClock(e.t)} <tspan>${e.h.toFixed(1)}</tspan></text>`;
+        svg += `<text x="${x.toFixed(1)}" y="${(e.hi ? y - 6 : y + 12).toFixed(1)}" text-anchor="${anchor}" class="c-tide-t">${clock(e.t)} <tspan>${e.h.toFixed(1)}</tspan></text>`;
       });
     }
 
@@ -1023,7 +1043,7 @@
     // HTML day header row (labels stick to the left edge while scrolling)
     const dayRow = days.map((d) => {
       const n = hrs.filter((h) => h.date === d).length, b = bests[d];
-      return `<div class="cd" style="width:${n * PX}px"><div class="cd-in"><b>${dayShort(d)}</b><span class="cd-d">${dm(d)}</span>${b && n >= 14 ? `<span class="cd-r" style="--c:${colour(b)}">${label(b)}</span>` : ''}</div></div>`;
+      return `<div class="cd" style="width:${n * PX}px"><div class="cd-in"><b>${dayLabel(d).top}</b><span class="cd-d">${dayLabel(d).sub}</span>${b && n >= 14 ? `<span class="cd-r" style="--c:${colour(b)}">${label(b)}</span>` : ''}</div></div>`;
     }).join('');
 
     const lane = (name, unit, y, extra = '') => `<div class="cl" style="top:${DR + y - 1}px">${name}</div>${unit ? `<div class="cl-u" style="top:${DR + y + 10}px">${unit}</div>` : ''}${extra}`;
@@ -1042,7 +1062,7 @@
     <div class="chart-key">
       <div class="key-row"><span class="key-k">Rating</span><span class="key-scale">${R.labels.map((l, i) => `<span><i style="background:var(--r${i + 1})"></i>${l}</span>`).join('')}<span><i style="background:var(--big)"></i>Too big</span></span></div>
       <div class="key-row"><span class="key-k">Wind</span><span class="key-wind">${[['offshore', 'Offshore'], ['cross', 'Cross'], ['onshore', 'Onshore']].map(([c, t]) => `<span><svg viewBox="-6 -7 12 13" aria-hidden="true"><path d="M0 -6.5L4.6 5.5L0 2.8L-4.6 5.5Z" transform="rotate(45)" fill="${windCol(c)}"/></svg>${t}</span>`).join('')}<span><svg viewBox="-6 -6 12 12" aria-hidden="true"><circle r="3" fill="${windCol('glassy')}"/></svg>Glassy</span></span></div>
-      <p class="key-note">Arrows point where the wind blows. Shaded band is the ${R.size.idealLow}–${R.size.idealHigh} m longboard sweet spot; lighter columns are daylight.</p>
+      <p class="key-note">Arrows point where the wind blows. Shaded band is the ${R.size.idealLow}–${R.size.idealHigh}${TS}m longboard sweet spot; lighter columns are daylight.</p>
     </div>`;
   }
 
@@ -1064,7 +1084,7 @@
       const x = X(e.m), y = Y(clamp(e.h, lo, hi));
       const al = x < 12 ? ' is-start' : x > 88 ? ' is-end' : '';
       return `<span class="td-dot" style="left:${x.toFixed(2)}%;top:${y.toFixed(1)}px"></span>`
-        + `<span class="td-lbl${e.hi ? ' is-hi' : ' is-lo'}${al}" style="left:${x.toFixed(2)}%;top:${y.toFixed(1)}px">${e.hi ? 'High' : 'Low'} <b>${e.h.toFixed(1)}</b> ${shortClock(e.t)}</span>`;
+        + `<span class="td-lbl${e.hi ? ' is-hi' : ' is-lo'}${al}" style="left:${x.toFixed(2)}%;top:${y.toFixed(1)}px">${e.hi ? 'High' : 'Low'} <b>${e.h.toFixed(1)}</b> ${clock(e.t)}</span>`;
     }).join('');
     const nowM = toMin(nowStr()), now = nowM > m0 && nowM < m1 ? `<span class="td-now" style="left:${X(nowM).toFixed(2)}%"></span>` : '';
     return `<div class="tday-tide" aria-hidden="true">
@@ -1087,10 +1107,10 @@
       const first = toMin(rows[0].t), last = toMin(rows[rows.length - 1].t) + 59;
       const evs = [];
       if (sun) {
-        evs.push({ m: toMin(sun.rise), html: `<span class="ev-sun">${sunIcon(false)}Sunrise ${clock(sun.rise)}</span>` });
-        evs.push({ m: toMin(sun.set), html: `<span class="ev-sun">${sunIcon(true)}Sunset ${clock(sun.set)}</span>` });
+        evs.push({ m: toMin(sun.rise), html: `<span class="ev-sun"><i class="ev-ic">${sunIcon(false)}</i>Sunrise · ${clock(sun.rise)}</span>` });
+        evs.push({ m: toMin(sun.set), html: `<span class="ev-sun"><i class="ev-ic">${sunIcon(true)}</i>Sunset · ${clock(sun.set)}</span>` });
       }
-      turns.filter((e) => e.t.slice(0, 10) === d).forEach((e) => evs.push({ m: e.m, html: `<span class="ev-tide">${tideIcon(e.hi)}${e.hi ? 'High' : 'Low'} tide ${e.h.toFixed(2)} m · ${clock(e.t)}</span>` }));
+      turns.filter((e) => e.t.slice(0, 10) === d).forEach((e) => evs.push({ m: e.m, html: `<span class="ev-tide"><i class="ev-ic">${tideIcon(e.hi)}</i>${e.hi ? 'High' : 'Low'} tide ${e.h.toFixed(2)}${TS}m · ${clock(e.t)}</span>` }));
       const ev = evs.filter((e) => e.m > first && e.m <= last).sort((a, b) => a.m - b.m);
       const best = dayBest(rows, d) || rows.reduce((a, b) => (b.score > a.score + 1e-9 ? b : a));
       let body = '', k = 0;
@@ -1099,12 +1119,12 @@
         while (k < ev.length && ev[k].m <= hm) body += `<tr class="ev"><td colspan="6">${ev[k++].html}</td></tr>`;
         const night = sun && (hm < toMin(sun.rise) - 30 || hm > toMin(sun.set) + 15);
         const isNow = h.t.slice(0, 13) === nowH;
-        const s2 = h.sw2.h > 0.2 ? `<span class="s2">+${f1(h.sw2.h)} ${cmp(h.sw2.d)} ${Math.round(h.sw2.p)}s</span>` : '';
+        const s2 = h.sw2.h > 0.2 ? `<span class="s2">+${f1(h.sw2.h)} ${cmp(h.sw2.d)} ${U(Math.round(h.sw2.p), 's')}</span>` : '';
         body += `<tr class="${night ? 'night' : ''}${isNow ? ' now' : ''}${h === best ? ' best' : ''}">
           <td class="t">${isNow ? '<b>Now</b>' : hourLbl(h.hour)}</td>
           <td class="r" style="--c:${colour(h)}"><span>${label(h)}</span></td>
           <td class="surf">${f1(h.surf)}</td>
-          <td class="sw">${f1(h.sw.h)} <span class="dir">${cmp(h.sw.d)}</span> ${Math.round(h.sw.p)}<small>s</small>${s2}</td>
+          <td class="sw">${f1(h.sw.h)} <span class="dir">${cmp(h.sw.d)}</span> ${U(Math.round(h.sw.p), 's')}${s2}</td>
           <td class="wind"><span style="color:${windCol(h.wI.cat)}">${arrow(h.wind.d, 'currentColor', 12)}</span>${Math.round(h.wind.s)}<span class="g">${Math.round(h.wind.g)}</span></td>
           <td class="tide">${h.tide ? `${f1(h.tide.h)}<span>${h.tide.rising ? '↑' : '↓'}</span>` : '–'}</td>
         </tr>`;
@@ -1112,7 +1132,7 @@
       while (k < ev.length) body += `<tr class="ev"><td colspan="6">${ev[k++].html}</td></tr>`;
       return `<section class="tday">
         <header class="tday-h">
-          <div class="tday-title"><h3>${dayShort(d) === wd(d) ? LONGDAY[wd(d)] : dayShort(d)}</h3><span class="tday-d">${dm(d)}</span>
+          <div class="tday-title"><h3>${dayLabel(d).top}</h3><span class="tday-d">${dayLabel(d).sub}</span>
             <span class="tday-best" style="--c:${colour(best)}">Best <b>${label(best)}</b> ${hourLbl(best.hour)}</span></div>
           ${ui.view === 'table' ? tideDay(sp, rows, turns) : ''}
           <div class="tcols" aria-hidden="true"><span>Time</span><span>Rating</span><span>Surf</span><span>Swell</span><span>Wind<i>km/h</i></span><span>Tide<i>m</i></span></div>
@@ -1141,6 +1161,8 @@
       if (model) renderHome(); // re-pin the lineup
       return;
     }
+    const flat = t.closest('[data-flat-toggle]');
+    if (flat) { haptic(); ui.flatOpen = !ui.flatOpen; renderHome(); return; }
     const reg = t.closest('.region button');
     if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.day = 0; renderHome(); swapIn(); return; }
     const day = t.closest('.day');
