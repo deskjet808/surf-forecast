@@ -23,8 +23,22 @@
 <link rel="preconnect" href="https://www.data.qld.gov.au" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<style>
+  /* Launch splash: inline so it paints before styles.css / JS. app.js adds .is-out once the lineup renders. */
+  html { background: #06090c; }
+  .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #06090c; transition: opacity .42s cubic-bezier(.2, .8, .2, 1), visibility 0s .42s; }
+  .splash svg { width: 64px; height: 64px; color: #c8f560; animation: splash-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+  .splash.is-out { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash.is-out svg { transform: scale(1.08); transition: transform .42s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes splash-rise { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .splash, .splash svg { animation: none; transition: none; } }
+</style>
 </head>
 <body>
+<div class="splash" id="splash" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="6.5" fill="currentColor" opacity=".9"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="#06090c" stroke-width="3.6"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6M2 26c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+<script>setTimeout(function () { var s = document.getElementById('splash'); if (s) s.classList.add('is-out'); }, 4000);</script>
+<div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" class="ptr-track"/><circle cx="12" cy="12" r="8" class="ptr-arc" pathLength="100"/></svg></div>
+<label class="haptic" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
 <div class="grain" aria-hidden="true"></div>
 <div class="statusbar-scrim" aria-hidden="true"></div>
 

@@ -559,3 +559,43 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 @media (min-width: 720px) {
   .view { padding-top: 40px; }
 }
+
+/* ---------- Feel: pull-to-refresh, swipe, haptics, transitions ---------- */
+.haptic { position: fixed; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; clip-path: inset(50%); }
+.ptr {
+  position: fixed; z-index: 40; left: 50%; top: calc(env(safe-area-inset-top) + 6px);
+  width: 34px; height: 34px; margin-left: -17px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--card-2); box-shadow: inset 0 0 0 1px var(--line-2), 0 6px 18px rgba(0, 0, 0, .45);
+  opacity: 0; transform: translateY(-48px) scale(.8); pointer-events: none;
+}
+.ptr.is-settling { transition: transform .38s var(--ease), opacity .28s var(--ease); }
+.ptr svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+.ptr circle { fill: none; stroke-width: 2; }
+.ptr-track { stroke: var(--line-2); }
+.ptr-arc { stroke: var(--acc); stroke-linecap: round; stroke-dasharray: var(--p, 0) 100; }
+.ptr.is-armed .ptr-arc { stroke-dasharray: 100 100; }
+.ptr.is-loading svg { animation: ptr-spin .8s linear infinite; }
+.ptr.is-loading .ptr-arc { stroke-dasharray: 30 100; }
+@keyframes ptr-spin { to { transform: rotate(270deg); } }
+
+#hero, #ranking { touch-action: pan-y; }
+.is-dragging { transition: none !important; }
+.slide-from-r { animation: slide-from-r .34s var(--ease) both; }
+.slide-from-l { animation: slide-from-l .34s var(--ease) both; }
+@keyframes slide-from-r { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes slide-from-l { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+.view-in { animation: view-in .28s var(--ease) both; }
+.view-back { animation: view-back .28s var(--ease) both; }
+@keyframes view-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes view-back { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+
+/* Card → spot page morph (View Transitions). Names are set by app.js only for the duration of a navigation. */
+::view-transition-group(spot-name), ::view-transition-group(spot-card) { animation-duration: .42s; animation-timing-function: var(--ease); }
+::view-transition-old(root) { animation: .24s var(--ease) both vt-out; }
+::view-transition-new(root) { animation: .32s var(--ease) both vt-in; }
+::view-transition-old(spot-name), ::view-transition-new(spot-name) { height: 100%; object-fit: contain; object-position: left center; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

@@ -432,6 +432,7 @@
 
   // No forecast at all (first run with no network, or servers down).
   function renderError() {
+    dismissSplash();
     const off = navigator.onLine === false;
     $('#hero').innerHTML = `<div class="hero-in state">
       <svg class="state-ic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="21" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 31c4.5 0 4.5-3 9-3s4.5 3 9 3 4.5-3 9-3 4.5 3 9 3M6 37c4.5 0 4.5-3 9-3s4.5 3 9 3 4.5-3 9-3 4.5 3 9 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 9l30 30" stroke="var(--big)" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -451,6 +452,7 @@
   function render() {
     renderHome();
     route();
+    dismissSplash();
   }
 
   function renderHome() {
@@ -1031,11 +1033,11 @@
   document.addEventListener('click', (e) => {
     const t = e.target;
     const reg = t.closest('.region button');
-    if (reg) { ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.day = 0; renderHome(); swapIn(); return; }
+    if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.day = 0; renderHome(); swapIn(); return; }
     const day = t.closest('.day');
-    if (day) { if (+day.dataset.i !== ui.day) { ui.day = +day.dataset.i; renderHome(); swapIn(); } return; }
+    if (day) { if (+day.dataset.i !== ui.day) { haptic(); ui.day = +day.dataset.i; renderHome(); swapIn(); } return; }
     const spot = t.closest('[data-spot]');
-    if (spot && !$('#home').hidden) { homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${spot.dataset.spot}`; return; }
+    if (spot && !$('#home').hidden) { markSource(spot); homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${spot.dataset.spot}`; return; }
     if (t.closest('#back')) {
       // only step back in history if we navigated here from the home screen; otherwise go home
       if (cameFromHome) { cameFromHome = false; history.back(); } else location.hash = '';
@@ -1043,6 +1045,7 @@
     }
     const v = t.closest('[data-view]');
     if (v) {
+      if (v.dataset.view !== ui.view) haptic();
       ui.view = v.dataset.view; store.set('dawnie:view', ui.view);
       const m = location.hash.match(/^#\/spot\/([\w-]+)/);
       const sp = m && model.spots.find((s) => s.spot.id === m[1]);
@@ -1053,12 +1056,150 @@
   });
   window.addEventListener('hashchange', () => {
     const toDetail = location.hash.startsWith('#/spot/');
-    route();
-    window.scrollTo(0, toDetail ? 0 : homeScroll);
+    navTransition(toDetail, () => {
+      route();
+      window.scrollTo(0, toDetail ? 0 : homeScroll);
+    });
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && raw && Date.now() - (raw.fetchedAt || 0) > C.ui.cacheMinutes * 60e3) load(true);
   });
+
+  /* ================================================================
+     FEEL — splash, haptics, view transitions, pull-to-refresh, day swipe
+     ================================================================ */
+  function dismissSplash() {
+    const el = document.getElementById('splash');
+    if (!el || el.classList.contains('is-out')) return;
+    requestAnimationFrame(() => el.classList.add('is-out'));
+    setTimeout(() => el.remove(), 700);
+  }
+
+  // One light tick. Android: Vibration API. iOS 18+ Safari: toggling a native <input switch> fires the system haptic.
+  const hapticLabel = $('.haptic');
+  function haptic() {
+    try {
+      if (navigator.vibrate) { if (!navigator.userActivation || navigator.userActivation.hasBeenActive) navigator.vibrate(8); }
+      else if (hapticLabel) hapticLabel.click();
+    } catch { /* not available */ }
+  }
+  if (hapticLabel) hapticLabel.addEventListener('click', (e) => e.stopPropagation());
+
+  // Spot card <-> spot page. The tapped name morphs into the detail title (and back).
+  let vtSource = null; // { id, hero }
+  function markSource(el) { vtSource = { id: el.dataset.spot, hero: el.id === 'hero' }; }
+  const nameEl = (src) => src && (src.hero ? $(`#hero[data-spot="${src.id}"] .hero-name`)
+    : $(`#ranking [data-spot="${src.id}"] .name`));
+  const tag = (el, n) => { if (el) el.style.viewTransitionName = n; };
+  const untag = () => document.querySelectorAll('.hero-name, .row .name, .d-title').forEach((el) => (el.style.viewTransitionName = ''));
+
+  function navTransition(toDetail, update) {
+    const motion = !reduceMotion();
+    if (motion && document.startViewTransition && model) {
+      untag();
+      tag(toDetail ? nameEl(vtSource) : $('#detail .d-title'), 'spot-name');
+      const vt = document.startViewTransition(() => {
+        untag();
+        update();
+        tag(toDetail ? $('#detail .d-title') : nameEl(vtSource), 'spot-name');
+      });
+      vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
+      vt.finished.then(untag, untag);
+      return;
+    }
+    update();
+    if (!motion) return;
+    const v = toDetail ? $('#detail') : $('#home');
+    v.classList.remove('view-in', 'view-back'); void v.offsetWidth;
+    v.classList.add(toDetail ? 'view-in' : 'view-back');
+    v.addEventListener('animationend', () => v.classList.remove('view-in', 'view-back'), { once: true });
+  }
+
+  // Touch gestures on the home view: pull down at the top to refresh; swipe sideways over the hero/lineup to change morning.
+  const ptr = $('#ptr');
+  const PTR_MAX = 96, PTR_TRIGGER = 64, SWIPE_MIN = 56;
+  let g = null, suppressClick = false;
+  const swipeEls = () => [$('#hero'), $('#ranking')];
+  const ptrShow = (d) => {
+    const p = clamp(d / PTR_TRIGGER, 0, 1);
+    ptr.style.opacity = String(Math.min(1, p * 1.4));
+    ptr.style.transform = `translateY(${d - 40}px) rotate(${d * 2.2}deg) scale(${0.8 + p * 0.2})`;
+    ptr.style.setProperty('--p', String(Math.round(p * 82)));
+    ptr.classList.toggle('is-armed', p >= 1);
+  };
+  const ptrHide = () => {
+    ptr.classList.add('is-settling');
+    ptr.classList.remove('is-armed', 'is-loading');
+    ptr.style.opacity = '0'; ptr.style.transform = '';
+    setTimeout(() => ptr.classList.remove('is-settling'), 400);
+  };
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || $('#home').hidden || !model) { g = null; return; }
+    const t = e.touches[0];
+    g = {
+      x: t.clientX, y: t.clientY, mode: null, d: 0, dx: 0,
+      top: window.scrollY <= 0 && !ptr.classList.contains('is-loading'),
+      swipe: !!e.target.closest('#hero, #ranking'),
+    };
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (!g.mode) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (g.swipe && Math.abs(dx) > Math.abs(dy) * 1.4) g.mode = 'swipe';
+      else if (g.top && dy > 0 && dy > Math.abs(dx) && window.scrollY <= 0) g.mode = 'pull';
+      else { g = null; return; } // ordinary scroll: leave it alone
+      if (g.mode === 'swipe') swipeEls().forEach((el) => el.classList.add('is-dragging'));
+    }
+    if (g.mode === 'pull') {
+      if (e.cancelable) e.preventDefault();
+      g.d = Math.min(PTR_MAX, Math.max(0, dy) * 0.5); // resistance
+      ptrShow(g.d);
+      if (g.d >= PTR_TRIGGER && !g.armed) { g.armed = true; haptic(); }
+      else if (g.d < PTR_TRIGGER) g.armed = false;
+    } else {
+      const n = document.querySelectorAll('#days .day').length;
+      const edge = (dx > 0 && ui.day === 0) || (dx < 0 && ui.day >= n - 1);
+      g.dx = dx;
+      const off = edge ? dx * 0.15 : dx * 0.4;
+      swipeEls().forEach((el) => { el.style.transform = `translateX(${off}px)`; el.style.opacity = String(1 - Math.min(0.35, Math.abs(off) / 400)); });
+    }
+  }, { passive: false });
+
+  const endGesture = () => {
+    if (!g || !g.mode) { g = null; return; }
+    suppressClick = true; setTimeout(() => (suppressClick = false), 60);
+    if (g.mode === 'pull') {
+      if (g.d >= PTR_TRIGGER && !net.busy) {
+        ptr.classList.add('is-settling', 'is-loading');
+        ptr.style.transform = `translateY(${PTR_TRIGGER - 24}px)`;
+        load(true).finally(() => setTimeout(ptrHide, 250));
+      } else ptrHide();
+    } else {
+      const n = document.querySelectorAll('#days .day').length;
+      const dir = g.dx <= -SWIPE_MIN ? 1 : g.dx >= SWIPE_MIN ? -1 : 0;
+      const next = ui.day + dir;
+      swipeEls().forEach((el) => { el.classList.remove('is-dragging'); el.style.transform = ''; el.style.opacity = ''; });
+      if (dir && next >= 0 && next < n) {
+        haptic();
+        ui.day = next;
+        renderHome();
+        if (!reduceMotion()) swipeEls().forEach((el) => {
+          el.classList.remove('slide-from-r', 'slide-from-l', 'swap'); void el.offsetWidth;
+          el.classList.add(dir > 0 ? 'slide-from-r' : 'slide-from-l');
+          el.addEventListener('animationend', () => el.classList.remove('slide-from-r', 'slide-from-l'), { once: true });
+        });
+      }
+    }
+    g = null;
+  };
+  document.addEventListener('touchend', endGesture, { passive: true });
+  document.addEventListener('touchcancel', endGesture, { passive: true });
+  // a drag must never also count as a tap on the row/hero underneath
+  document.addEventListener('click', (e) => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); } }, true);
 
   // first paint: skeletons shaped like the real layout, so nothing jumps when data lands
   const sk = (w, h, extra = '') => `<span class="skel" style="width:${w};height:${h}px;${extra}"></span>`;
