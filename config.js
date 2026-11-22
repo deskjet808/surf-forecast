@@ -225,5 +225,38 @@ window.DAWNIE = {
     detailFromHour: 4,      // hourly table shows 4am…
     detailToHour: 19,       // …to 7pm
     cacheMinutes: 20,       // re-use data younger than this without refetching
+
+    /* --- GO / MAYBE / SKIP verdict at the top of the home hero.
+           Based on the rating (1 Poor … 5 Epic) of the best spot in the region
+           for the selected morning:  rating ≥ go → Go,  ≥ maybe → Maybe,  else Skip.
+           'Too big' and 'Flat' are always Skip. */
+    verdict: { go: 4, maybe: 3 },
+
+    /* One-line taglines under the verdict. The first matching situation wins
+       (see `tagline()` in app.js):
+         tooBig     – best spot is over your size limit
+         flat       – nothing reaching the beach
+         blownOut   – wind has wrecked it (wind sub-score below 0.35)
+         glassy     – Go, and the wind is under the glassy limit
+         offshore   – Go, with offshore wind
+         go         – Go, anything else
+         smallClean – Maybe, under the sweet spot but clean
+         bumpy      – Maybe, with noticeable chop
+         maybe      – Maybe, anything else
+         tiny       – Skip, just too small
+         skip       – Skip, anything else */
+    taglines: {
+      tooBig: 'Too big for the log',
+      flat: 'Flat as a tack — sleep in',
+      blownOut: 'Blown out, stay in bed',
+      glassy: 'Glassy and fun',
+      offshore: 'Clean lines, grab the log',
+      go: 'Worth the alarm',
+      smallClean: 'Small but clean — log day',
+      bumpy: 'A bit bumpy, still surfable',
+      maybe: 'Fun enough if you’re keen',
+      tiny: 'Knee-high at best',
+      skip: 'Not worth the wetsuit',
+    },
   },
 };

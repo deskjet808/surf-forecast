@@ -205,6 +205,33 @@
   const label = (h) => (h.flag === 'flat' ? 'Flat' : h.flag === 'big' ? 'Too big' : R.labels[h.rating - 1]);
   const colour = (h) => (h.flag === 'big' ? 'var(--big)' : `var(--r${h.rating})`);
 
+  // Go / Maybe / Skip for a morning's best hour (thresholds in C.ui.verdict).
+  function verdict(h) {
+    const V = C.ui.verdict;
+    if (h.flag) return 'skip';
+    return h.rating >= V.go ? 'go' : h.rating >= V.maybe ? 'maybe' : 'skip';
+  }
+  const VERDICT = { go: 'Go', maybe: 'Maybe', skip: 'Skip' };
+  function tagline(h, v) {
+    const T = C.ui.taglines;
+    if (h.flag === 'big') return T.tooBig;
+    if (h.flag === 'flat') return T.flat;
+    if (h.wI.sc < 0.35) return T.blownOut;
+    if (v === 'go') return h.wI.cat === 'glassy' ? T.glassy : h.wI.cat === 'offshore' ? T.offshore : T.go;
+    if (v === 'maybe') return h.surf < R.size.idealLow && h.wI.sc > 0.8 ? T.smallClean : h.chop > 0.12 ? T.bumpy : T.maybe;
+    return h.surf < R.size.idealLow ? T.tiny : T.skip;
+  }
+
+  /* ---------------- Favourite spots ---------------- */
+  const FAV_KEY = 'dawnie:favs';
+  const favs = new Set(Array.isArray(store.get(FAV_KEY)) ? store.get(FAV_KEY) : []);
+  const isFav = (id) => favs.has(id);
+  function toggleFav(id) {
+    if (favs.has(id)) favs.delete(id); else favs.add(id);
+    store.set(FAV_KEY, [...favs]);
+  }
+  const starBtn = (id, name, cls = '') => `<button class="fav${cls}" data-fav="${id}" aria-pressed="${isFav(id)}" aria-label="${isFav(id) ? 'Remove' : 'Add'} ${esc(name)} ${isFav(id) ? 'from' : 'to'} favourites"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.5l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z" stroke-linejoin="round"/></svg></button>`;
+
   function tideWord(t) {
     if (!t) return '';
     const n = t.norm;
@@ -486,15 +513,19 @@
 
     renderHero(list[0], date);
 
-    $('#ranking').innerHTML = list.map(({ sp, m }, i) => {
-      const b = m.best;
+    // favourites pinned to the top (keeping their score rank number)
+    const ranked = list.map((x, i) => ({ ...x, rank: i + 1 }));
+    const pinned = ranked.filter((x) => isFav(x.sp.spot.id));
+    const ordered = [...pinned, ...ranked.filter((x) => !isFav(x.sp.spot.id))];
+    $('#ranking').innerHTML = ordered.map(({ sp, m, rank }, i) => {
+      const b = m.best, fav = isFav(sp.spot.id);
       const bars = m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="--c:${colour(h)};--v:${barH(h)}"></i>`).join('');
-      return `<li class="row" data-spot="${sp.spot.id}" style="--i:${i}">
-        <span class="rank">${String(i + 1).padStart(2, '0')}</span>
-        <span class="name">${esc(sp.spot.name)}</span>
+      return `<li class="row${fav ? ' is-fav' : ''}${fav && i === pinned.length - 1 ? ' fav-last' : ''}" data-spot="${sp.spot.id}" style="--i:${i}">
+        <span class="rank">${String(rank).padStart(2, '0')}</span>
+        <span class="name"><span class="nm">${esc(sp.spot.name)}</span>${starBtn(sp.spot.id, sp.spot.name)}</span>
         <span class="pill" style="--c:${colour(b)}">${label(b)}</span>
         <span class="why">${esc(cap([...why(b), ...(b.tide ? [tideWord(b.tide)] : [])].join(', ')))}</span>
-        <span class="strip" aria-label="Best at ${hourLbl(b.hour)}, window ${hourLbl(m.hrs[0].hour)} to ${hourLbl(m.hrs[m.hrs.length - 1].hour)}"><span class="spark-m" aria-hidden="true">${bars}</span><span class="at">best <b>${hourLbl(b.hour)}</b></span></span>
+        <span class="strip" aria-label="Best at ${hourLbl(b.hour)}, window ${hourLbl(m.hrs[0].hour)} to ${hourLbl(m.hrs[m.hrs.length - 1].hour)}"><span class="spark-m" aria-hidden="true">${bars}</span>${tideSpark(m)}<span class="row-wind" style="color:${windCol(b.wI.cat)}" title="${cmp(b.wind.d)} ${b.wI.cat} ${Math.round(b.wind.s)} km/h">${b.wI.cat === 'glassy' ? '<i class="calm"></i>' : arrow(b.wind.d, 'currentColor', 11)}<span>${Math.round(b.wind.s)}</span></span><span class="at">best <b>${hourLbl(b.hour)}</b></span></span>
       </li>`;
     }).join('');
 
@@ -504,6 +535,17 @@
 
   // Bar height for an hour: its score, full height at Epic, with a floor so every hour reads.
   const barH = (h) => clamp(h.score / 0.8, 0.08, 1).toFixed(3);
+
+  // Tiny tide line for a lineup row's morning window, best hour marked.
+  function tideSpark(m) {
+    const hrs = m.hrs, n = hrs.length;
+    if (n < 2 || hrs.some((h) => !h.tide)) return '';
+    const W = 36, H = 14, P = 2;
+    const pts = hrs.map((h, k) => [P + (k / (n - 1)) * (W - 2 * P), H - P - h.tide.norm * (H - 2 * P)]);
+    const d = pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+    const bp = pts[hrs.indexOf(m.best)];
+    return `<svg class="tide-m" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><path d="${d}"/>${bp ? `<circle cx="${bp[0].toFixed(1)}" cy="${bp[1].toFixed(1)}" r="2"/>` : ''}</svg>`;
+  }
 
   // Hero mini timeline: one column per morning hour, plus the tide as a dashed line.
   function timeline(m) {
@@ -542,7 +584,9 @@
     el.dataset.spot = sp.spot.id;
     const tide = b.tide ? `${f1(b.tide.h)}<small> m</small>` : '–';
     const tideArrow = (up) => `<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" style="color:var(--tide)"><path d="M6 ${up ? '10V2M2.5 5.5 6 2l3.5 3.5' : '2v8M2.5 6.5 6 10l3.5-3.5'}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const v = verdict(b);
     el.innerHTML = `<div class="hero-in">
+        <div class="verdict is-${v}"><span class="v-word">${VERDICT[v]}</span><span class="v-tag">${esc(tagline(b, v))}</span></div>
         <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayName(date)} · ${hourLbl(b.hour)}</span></div>
         <div class="hero-rating">${label(b)}</div>
         <div class="hero-name">${esc(sp.spot.name)}</div>
@@ -763,6 +807,7 @@
       <div class="d-top">
         <button class="icon-btn" id="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span class="crumb">${s.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast'}</span>
+        ${starBtn(s.id, s.name, ' icon-btn d-fav')}
       </div>
       <header class="d-head">
         <div class="d-kicker">${TYPE[s.type] || 'Surf break'}</div>
@@ -773,7 +818,7 @@
             <div><dt><i class="k-face"></i>Faces</dt><dd>${cmp(s.faces)}</dd></div>
             <div><dt><i class="k-swell"></i>Swell window</dt><dd>${win}</dd></div>
             <div><dt><i class="k-off"></i>Offshore wind</dt><dd>${cmp(s.offshore)}</dd></div>
-            <div><dt><i class="k-tide"></i>Best tide</dt><dd>${TIDE_PREF[s.tide] || '–'}<span>${esc(port)} tides</span></dd></div>
+            <div><dt><i class="k-tide"></i>Best tide</dt><dd>${TIDE_PREF[s.tide] || '–'}<span>${esc(port)}</span></dd></div>
           </dl>
         </div>
         <p class="d-note">${esc(s.note)}</p>
@@ -833,6 +878,34 @@
     }
     return out;
   }
+
+  // Smooth tide height samples [minute, metres] between m0 and m1: cosine between the
+  // MSQ highs/lows (same maths as attachTide), or a smoothed hourly model as fallback.
+  function tideSamples(sp, m0, m1, step = 15) {
+    const ext = raw.tides && raw.tides[sp.spot.tidePort];
+    const out = [];
+    if (ext && ext.length > 1) {
+      let k = 1;
+      for (let m = m0; m <= m1; m += step) {
+        while (k < ext.length && ext[k].m <= m) k++;
+        if (k >= ext.length || ext[k - 1].m > m) continue;
+        const a = ext[k - 1], b = ext[k], s = (1 - Math.cos((Math.PI * (m - a.m)) / (b.m - a.m))) / 2;
+        out.push([m, a.h + (b.h - a.h) * s]);
+      }
+      return out;
+    }
+    const pts = sp.hours.filter((h) => h.tide).map((h) => [toMin(h.t), h.tide.h]);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ma, a] = pts[i], [mb, b] = pts[i + 1];
+      if (mb < m0 || ma > m1 || mb - ma > 90) continue;
+      for (let m = ma; m < mb; m += step) {
+        const s = (1 - Math.cos((Math.PI * (m - ma)) / (mb - ma))) / 2;
+        if (m >= m0 && m <= m1) out.push([m, a + (b - a) * s]);
+      }
+    }
+    return out;
+  }
+  const smoothPath = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('');
 
   // Best daylight hour of a day (for the chart's per-day summary).
   function dayBest(list, d) {
@@ -922,14 +995,14 @@
     });
 
     // tide: curve, fill, hi/lo turning points
-    const th = hrs.map((h) => (h.tide ? h.tide.h : null));
-    const tv = th.filter((v) => v != null);
-    if (tv.length) {
+    const ts = tideSamples(sp, m0, m1);
+    const tv = ts.map((p) => p[1]);
+    if (tv.length > 1) {
       const tlo = Math.min(...tv), thi = Math.max(...tv);
       const top = Y.tide + 14, bot = Y.tide + Y.tideH - 13;
       const ty = (v) => bot - ((v - tlo) / (thi - tlo || 1)) * (bot - top);
-      let d = '', x0 = null, x1 = null;
-      th.forEach((v, i) => { if (v == null) return; const x = hx(hrs[i]); d += `${x0 == null ? 'M' : 'L'}${x} ${ty(v).toFixed(1)}`; if (x0 == null) x0 = x; x1 = x; });
+      const d = smoothPath(ts.map(([m, v]) => [xm(m), ty(v)]));
+      const x0 = xm(ts[0][0]).toFixed(1), x1 = xm(ts[ts.length - 1][0]).toFixed(1);
       svg += `<defs><linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--tide)" stop-opacity=".28"/><stop offset="1" stop-color="var(--tide)" stop-opacity=".02"/></linearGradient></defs>`;
       svg += `<path d="${d}L${x1} ${Y.tide + Y.tideH}L${x0} ${Y.tide + Y.tideH}Z" fill="url(#tideFill)"/><path d="${d}" class="c-tide"/>`;
       tideTurns(sp).filter((e) => e.m >= m0 && e.m <= m1).forEach((e) => {
@@ -976,6 +1049,30 @@
   const sunIcon = (set) => `<svg viewBox="0 0 16 12" aria-hidden="true"><path d="M3.5 9a4.5 4.5 0 0 1 9 0" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1 10.5h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 ${set ? '1.2v2.6M6.4 2.4 8 3.9l1.6-1.5' : '3.9V1.2M6.4 2.7 8 1.2l1.6 1.5'}" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const tideIcon = (hi) => `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${hi ? 'M6 2.5 10 8H2z' : 'M6 9.5 10 4H2z'}" fill="currentColor"/></svg>`;
 
+  // A day's tide as a smooth curve over the hours the table shows, highs/lows labelled.
+  function tideDay(sp, rows, turns) {
+    const m0 = toMin(rows[0].t), m1 = toMin(rows[rows.length - 1].t) + 30;
+    if (m1 - m0 < 120) return '';
+    // scale to the whole day so the curve keeps a true shape even on a short "today"
+    const day = rows[0].date, all = tideSamples(sp, toMin(day), toMin(day) + 1440, 20);
+    const ts = all.filter(([m]) => m >= m0 && m <= m1);
+    if (ts.length < 3) return '';
+    const vals = all.map((p) => p[1]), lo = Math.min(...vals), hi = Math.max(...vals);
+    const X = (m) => ((m - m0) / (m1 - m0)) * 100, Y = (v) => 34 - ((v - lo) / (hi - lo || 1)) * 26; // 8…34 of 44
+    const line = smoothPath(ts.map(([m, v]) => [X(m) * 10, Y(v)]));
+    const marks = turns.filter((e) => e.m >= m0 && e.m <= m1).map((e) => {
+      const x = X(e.m), y = Y(clamp(e.h, lo, hi));
+      const al = x < 12 ? ' is-start' : x > 88 ? ' is-end' : '';
+      return `<span class="td-dot" style="left:${x.toFixed(2)}%;top:${y.toFixed(1)}px"></span>`
+        + `<span class="td-lbl${e.hi ? ' is-hi' : ' is-lo'}${al}" style="left:${x.toFixed(2)}%;top:${y.toFixed(1)}px">${e.hi ? 'High' : 'Low'} <b>${e.h.toFixed(1)}</b> ${shortClock(e.t)}</span>`;
+    }).join('');
+    const nowM = toMin(nowStr()), now = nowM > m0 && nowM < m1 ? `<span class="td-now" style="left:${X(nowM).toFixed(2)}%"></span>` : '';
+    return `<div class="tday-tide" aria-hidden="true">
+        <svg viewBox="0 0 1000 44" preserveAspectRatio="none"><path class="td-a" d="${line}L1000 44L0 44Z"/><path class="td-l" d="${line}" vector-effect="non-scaling-stroke"/></svg>
+        ${now}${marks}
+      </div>`;
+  }
+
   function tableBlock(sp) {
     const today = nowStr().slice(0, 10);
     const nowH = nowStr().slice(0, 13);
@@ -1017,6 +1114,7 @@
         <header class="tday-h">
           <div class="tday-title"><h3>${dayShort(d) === wd(d) ? LONGDAY[wd(d)] : dayShort(d)}</h3><span class="tday-d">${dm(d)}</span>
             <span class="tday-best" style="--c:${colour(best)}">Best <b>${label(best)}</b> ${hourLbl(best.hour)}</span></div>
+          ${ui.view === 'table' ? tideDay(sp, rows, turns) : ''}
           <div class="tcols" aria-hidden="true"><span>Time</span><span>Rating</span><span>Surf</span><span>Swell</span><span>Wind<i>km/h</i></span><span>Tide<i>m</i></span></div>
         </header>
         <table class="tbl">${cols}
@@ -1032,6 +1130,17 @@
   let homeScroll = 0, cameFromHome = false;
   document.addEventListener('click', (e) => {
     const t = e.target;
+    const fav = t.closest('[data-fav]');
+    if (fav) {
+      toggleFav(fav.dataset.fav);
+      const on = isFav(fav.dataset.fav);
+      document.querySelectorAll(`[data-fav="${fav.dataset.fav}"]`).forEach((b) => {
+        b.setAttribute('aria-pressed', String(on));
+        b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^(Add|Remove)(.*) (to|from) favourites$/, (_, a, n) => `${on ? 'Remove' : 'Add'}${n} ${on ? 'from' : 'to'} favourites`));
+      });
+      if (model) renderHome(); // re-pin the lineup
+      return;
+    }
     const reg = t.closest('.region button');
     if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.day = 0; renderHome(); swapIn(); return; }
     const day = t.closest('.day');
