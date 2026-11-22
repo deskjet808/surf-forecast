@@ -108,83 +108,85 @@ window.DAWNIE = {
      sizeFactor   how much of the open-ocean swell actually reaches the break
                   (wrapping points like Noosa only get part of it)
      tide         low | lowmid | mid | midhigh | high | all
+     maxSize      optional: break height (m) above which it's 'Too big' for you here
      buoy         nearest Qld Govt wave buoy (see BUOYS)
      tidePort     key into TIDES
      =========================================================================== */
   spots: [
     // ---------------- Sunshine Coast ----------------
+    // Coordinates: OpenStreetMap features + wannasurf GPS, take-off offset by hand (±50–150 m).
     { id: 'first-point', name: 'Noosa First Point', short: 'First Point', region: 'sc', type: 'point',
-      lat: -26.38420, lon: 153.09060, faces: 20, offshore: 180,
-      swell: { ideal: 75, spread: 30 }, sizeFactor: 0.55, tide: 'mid',
+      lat: -26.38420, lon: 153.09430, faces: 355, offshore: 180,
+      swell: { ideal: 80, spread: 40 }, sizeFactor: 0.55, tide: 'all',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
-      note: 'The longboard mecca. Needs E–NE swell to wrap the headland; loves SE winds.' },
-
-    { id: 'tea-tree', name: 'Tea Tree Bay', short: 'Tea Tree', region: 'sc', type: 'point',
-      lat: -26.37830, lon: 153.10230, faces: 15, offshore: 180,
-      swell: { ideal: 70, spread: 30 }, sizeFactor: 0.6, tide: 'mid',
-      buoy: 'Mooloolaba', tidePort: 'mooloolaba',
-      note: 'Long peeling rights inside the national park. E–NE swell, SE wind is offshore-ish.' },
+      note: 'The longboard mecca. Sand-bottom right that needs E–NE swell to wrap the headland. Glassy in SE–S winds; NE wind blows it out.' },
 
     { id: 'nationals', name: 'National Park', short: 'Nationals', region: 'sc', type: 'point',
-      lat: -26.38060, lon: 153.09750, faces: 10, offshore: 190,
-      swell: { ideal: 75, spread: 30 }, sizeFactor: 0.58, tide: 'mid',
+      lat: -26.37890, lon: 153.10040, faces: 340, offshore: 170,
+      swell: { ideal: 80, spread: 40 }, sizeFactor: 0.62, tide: 'lowmid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
-      note: 'Sand-bottom right point between First Point and Tea Tree. E–NE swell, SE winds.' },
+      note: 'Most consistent of the inner points, from Boiling Pot towards Little Cove. Holds more swell than First Point; sheltered in SE winds.' },
 
-    { id: 'moffat', name: 'Moffat Beach', short: 'Moffat', region: 'sc', type: 'point',
-      lat: -26.79060, lon: 153.14270, faces: 60, offshore: 240,
-      swell: { ideal: 120, spread: 35 }, sizeFactor: 0.85, tide: 'mid',
-      buoy: 'Caloundra', tidePort: 'mooloolaba',
-      note: 'Rocky right point. SE swell, best on SW–W winds.' },
+    { id: 'tea-tree', name: 'Tea Tree Bay', short: 'Tea Tree', region: 'sc', type: 'point',
+      lat: -26.37800, lon: 153.10690, faces: 330, offshore: 160,
+      swell: { ideal: 75, spread: 40 }, sizeFactor: 0.6, tide: 'mid',
+      buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      note: 'Long, gentle right over rock and sand into the bay. Needs E–NE swell, protected from SE winds. Busy with loggers when on.' },
 
     { id: 'alex', name: 'Alexandra Headland', short: 'Alex', region: 'sc', type: 'point',
-      lat: -26.67250, lon: 153.11000, faces: 70, offshore: 250,
-      swell: { ideal: 110, spread: 35 }, sizeFactor: 0.85, tide: 'mid',
+      lat: -26.67150, lon: 153.11250, faces: 45, offshore: 225,
+      swell: { ideal: 120, spread: 50 }, sizeFactor: 0.85, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
-      note: 'Right off the headland into the beach. SE–E swell, W winds offshore.' },
+      note: 'Right off the bluff into Alex beach plus beach peaks. Likes SE groundswell; SE wind is cross-shore, so go early or in S–SW winds.' },
 
-    { id: 'happys', name: 'Happys', short: 'Happys', region: 'sc', type: 'beach',
-      lat: -26.79950, lon: 153.14400, faces: 85, offshore: 265,
-      swell: { ideal: 115, spread: 35 }, sizeFactor: 0.9, tide: 'lowmid',
+    { id: 'moffat', name: 'Moffat Beach', short: 'Moffat', region: 'sc', type: 'point',
+      lat: -26.79010, lon: 153.14670, faces: 55, offshore: 235,
+      swell: { ideal: 105, spread: 50 }, sizeFactor: 0.85, tide: 'all',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
-      note: 'Friendly reef/sand peaks at Happy Valley. SE swell, W winds.' },
+      note: 'Soft, peeling rights over a sloping rock shelf — a logger favourite. E or wrapping SE swell; some shelter in S–SE winds.' },
 
     { id: 'kings', name: 'Kings Beach', short: 'Kings', region: 'sc', type: 'beach',
-      lat: -26.80450, lon: 153.14450, faces: 120, offshore: 300,
-      swell: { ideal: 110, spread: 35 }, sizeFactor: 0.9, tide: 'mid',
+      lat: -26.80500, lon: 153.14180, faces: 135, offshore: 315,
+      swell: { ideal: 140, spread: 50 }, sizeFactor: 0.9, tide: 'all',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
-      note: 'Open beach peaks. Picks up E–SE swell, wants NW–W winds.' },
+      note: "Caloundra's swell magnet: A-frames on SE swell. Needs NW–W wind, so go early before the SE sea breeze." },
+
+    { id: 'happys', name: 'Happys', short: 'Happys', region: 'sc', type: 'beach',
+      lat: -26.80900, lon: 153.13700, faces: 160, offshore: 340,
+      swell: { ideal: 150, spread: 45 }, sizeFactor: 0.8, tide: 'mid',
+      buoy: 'Caloundra', tidePort: 'mooloolaba',
+      note: 'Cruisy lefts on the channel-mouth banks at Happy Valley. Needs SE–S swell and N–NW wind. Banks shift since the 2022 Bribie breakthrough; watch run-out currents.' },
 
     // ---------------- Gold Coast ----------------
     { id: 'currumbin', name: 'Currumbin Alley', short: 'Currumbin', region: 'gc', type: 'point',
-      lat: -28.12780, lon: 153.48600, faces: 35, offshore: 210,
-      swell: { ideal: 120, spread: 35 }, sizeFactor: 0.75, tide: 'lowmid',
+      lat: -28.12450, lon: 153.48720, faces: 40, offshore: 220,
+      swell: { ideal: 110, spread: 45 }, sizeFactor: 0.75, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
-      note: 'Soft, rolling rights at the creek mouth — a classic learner longboard wave.' },
+      note: 'Gentle sand-bottom right off Currumbin Rock into the creek mouth. Sheltered from SE — the go-to small-wave log spot. Strong rip on the run-out.' },
 
     { id: 'rainbow', name: 'Rainbow Bay', short: 'Rainbow', region: 'gc', type: 'point',
-      lat: -28.16550, lon: 153.54700, faces: 15, offshore: 200,
-      swell: { ideal: 120, spread: 35 }, sizeFactor: 0.75, tide: 'mid',
+      lat: -28.16300, lon: 153.54760, faces: 345, offshore: 180,
+      swell: { ideal: 115, spread: 45 }, sizeFactor: 0.7, tide: 'all',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
-      note: 'Long rights off Snapper/Greenmount. SE swell and SE–S winds.' },
-
-    { id: 'burleigh', name: 'Burleigh Heads', short: 'Burleigh', region: 'gc', type: 'point',
-      lat: -28.08850, lon: 153.45500, faces: 45, offshore: 220,
-      swell: { ideal: 115, spread: 35 }, sizeFactor: 0.85, tide: 'mid',
-      buoy: 'Gold Coast Mk4', tidePort: 'goldcoast',
-      note: 'Fast barrelling right point. Best small for longboards; SE–S winds.' },
+      note: 'The softer inside of the Superbank below Snapper. E–SE swell wraps in; stays clean in SE–S winds.' },
 
     { id: 'kirra', name: 'Kirra', short: 'Kirra', region: 'gc', type: 'point',
-      lat: -28.16750, lon: 153.52450, faces: 30, offshore: 200,
-      swell: { ideal: 120, spread: 30 }, sizeFactor: 0.75, tide: 'mid',
+      lat: -28.16480, lon: 153.53530, faces: 5, offshore: 180, maxSize: 1.2,
+      swell: { ideal: 120, spread: 40 }, sizeFactor: 0.75, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
-      note: 'World-class right. Needs SE swell to wrap; small days suit a longboard.' },
+      note: 'Fast, hollow right off the groyne. Needs solid E–SE swell; only a longboard wave on small days.' },
+
+    { id: 'burleigh', name: 'Burleigh Heads', short: 'Burleigh', region: 'gc', type: 'point',
+      lat: -28.09000, lon: 153.45720, faces: 55, offshore: 225, maxSize: 1.3,
+      swell: { ideal: 130, spread: 45 }, sizeFactor: 0.85, tide: 'lowmid',
+      buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
+      note: 'Powerful right over sand and boulders. Longboard it small or on the inside; sheltered from S–SE winds.' },
 
     { id: 'narrowneck', name: 'Narrowneck', short: 'Narrowneck', region: 'gc', type: 'reef',
-      lat: -28.01090, lon: 153.43420, faces: 90, offshore: 270,
-      swell: { ideal: 110, spread: 40 }, sizeFactor: 0.9, tide: 'mid',
+      lat: -27.98500, lon: 153.43220, faces: 85, offshore: 265,
+      swell: { ideal: 100, spread: 60 }, sizeFactor: 0.9, tide: 'mid',
       buoy: 'Gold Coast Mk4', tidePort: 'goldcoast',
-      note: 'Artificial reef and beach banks in Main Beach. Open to E–SE swell, W winds.' },
+      note: 'Open beach with peaks shaped by the artificial reef. Picks up most swell but only clean in W winds — early mornings.' },
   ],
 
   /* ===========================================================================
