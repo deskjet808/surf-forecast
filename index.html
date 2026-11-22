@@ -48,7 +48,7 @@
 </style>
 </head>
 <body>
-<div class="splash" id="splash" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="6.5" fill="currentColor" opacity=".9"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="#06090c" stroke-width="3.6"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6M2 26c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+<div class="splash" id="splash" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg></div>
 <script>setTimeout(function () { var s = document.getElementById('splash'); if (s) s.classList.add('is-out'); }, 4000);</script>
 <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" class="ptr-track"/><circle cx="12" cy="12" r="8" class="ptr-arc" pathLength="100"/></svg></div>
 <label class="haptic" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
@@ -58,9 +58,9 @@
 <main id="home" class="view">
   <header class="top">
     <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="17" r="6.5" fill="currentColor" opacity=".9"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="var(--bg)" stroke-width="3.6"/><path d="M2 21c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6M2 26c3.5 0 3.5-2.6 7-2.6s3.5 2.6 7 2.6 3.5-2.6 7-2.6 3.5 2.6 7 2.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg>
       <div>
-        <h1>Surf Cowabunga</h1>
+        <h1 aria-label="Surf Cowabunga">surf<span class="slash">/</span>cowabunga</h1>
         <p class="sub" id="updated">Loading the lineup…</p>
       </div>
     </div>
@@ -93,7 +93,7 @@
     <h2 class="foot-label">Data</h2>
     <ul id="sources" class="sources" aria-live="polite"></ul>
     <p class="fine">Forecast is a model, not a promise — always check it with your own eyes. Tides are Maritime Safety Queensland predictions (metres above lowest astronomical tide). Buoy heights are significant wave height (Hs). All times Brisbane (AEST).</p>
-    <p class="sig"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32.96" r="11.2" fill="currentColor" clip-path="url(#sig-c)"/><clipPath id="sig-c"><rect width="64" height="33.4"/></clipPath><path d="M13.8 39.3c3 0 3-3 6.1-3s3 3 6 3 3-3 6.1-3 3 3 6 3 3-3 6.1-3 3 3 6 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Surf Cowabunga · for the dawn patrol</p>
+    <p class="sig"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg>Surf Cowabunga · for the dawn patrol</p>
   </footer>
 </main>
 
