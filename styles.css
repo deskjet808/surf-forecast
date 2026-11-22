@@ -684,3 +684,4 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+.morning .m-sub > span { white-space: nowrap; }
