@@ -23,3 +23,7 @@ Every day is split into three blocks: **Dawn** (first light to 10am), **Midday**
 ## Confidence %
 
 Each rating shows a confidence figure (5–95%) with three dots. It comes from how closely independent wave models (default, GFS, ECMWF) and wind models (ECMWF, GFS) agree for those hours, reduced the further out the day is. It is an estimate of agreement, not a measured hit rate.
+
+## Forecast track record
+
+`.github/workflows/verify.yml` runs `tools/verify.py` at 7:17am and 7:17pm Brisbane. It saves what Open-Meteo forecast at each buoy the same day, a day ahead and two days ahead (its previous-runs data), saves the buoys' hourly wave height, and writes `data/track.json`. Buoy check shows how often the forecast was within 0.2 m of the buoys between 4am and 7pm over the last 30 days. It needs a week of data before it shows figures. GitHub can turn scheduled jobs off after 60 days without other activity in the repo; if the figures stop updating, re-enable it in the Actions tab.

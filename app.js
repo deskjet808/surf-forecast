@@ -507,6 +507,7 @@
 
   async function load(force) {
     if (net.busy) return;
+    fetchTrack();
     const started = Date.now();
     setBusy(true);
     const cached = store.get('dawnie:data:v2');
@@ -839,7 +840,8 @@
     const c = confidence(list[0].m);
     el.innerHTML = `<div class="block-head"><h2>${blockOf(ui.block).head}</h2><span class="block-meta">${wd(date)} ${dm(date)}</span></div>
       <p class="sum-p">${txt}</p>
-      <div class="sum-conf">${confDots(c)}<span><b>${c.word} confidence</b> · ${esc(c.note)}</span></div>`;
+      <div class="sum-conf">${confDots(c)}<span><b>${c.word} confidence</b> · ${esc(c.note)}</span></div>
+      <p class="sum-track" id="sum-track">${trackLine(date)}</p>`;
   }
 
   /* ---------------- Outlook tab ---------------- */
@@ -897,7 +899,7 @@
             ${conf[i] ? confDots(conf[i]) : ''}
           </li>`;
         }).join('')}</ol>
-        <p class="fine o-fine">Each row is the best spot and hour in the ${B.name.toLowerCase()} block (${B.range}). The % and dots are confidence: how closely independent wave and wind models agree, reduced the further out it is. It is not a measured hit rate.</p>
+        <p class="fine o-fine">Each row is the best spot and hour in the ${B.name.toLowerCase()} block (${B.range}). The % and dots are confidence: how closely independent wave and wind models agree, reduced the further out it is. It is not a measured hit rate: for that, see Track record under Buoy check on Today.</p>
       </section>`;
   }
 
@@ -1186,6 +1188,7 @@
   function renderBuoys() {
     const el = $('#buoys');
     if (!model) return;
+    renderTrack();
     const list = C.buoys.map((b, i) => ({ b, i })).filter(({ b }) => b.region === ui.region);
     const obsAll = (raw && raw.buoys) || {};
     const nowM = toMin(nowStr());
@@ -1233,6 +1236,61 @@
         ${sparkline(obs, fc, b.site)}
       </article>`;
     }).join('') + (ui.region === 'sc' ? '<p class="buoy-note">No Noosa buoy is in the live feed — Mooloolaba is the closest.</p>' : '');
+  }
+
+  /* ---------------- Track record ---------------- */
+  // data/track.json is written twice a day by .github/workflows/verify.yml (tools/verify.py):
+  // how often the forecast at each region's buoys was within `tol` metres of what they measured.
+  let track = store.get('dawnie:track') || null;
+  const LEAD_NAMES = ['Same day', 'Day ahead', '2 days out'];
+  async function fetchTrack() {
+    try {
+      track = await getJSON(`data/track.json?t=${Date.now()}`);
+      store.set('dawnie:track', track);
+    } catch (e) { console.warn('track record', e); }
+    if (!model) return;
+    renderTrack();
+    const el = $('#sum-track'), date = regionRanks(ui.region).dates[ui.day];
+    if (el && date) el.innerHTML = trackLine(date);
+  }
+  const trackRegion = () => (track && track.regions && track.regions[ui.region]) || null;
+  const trackReady = (r) => r && r.days >= track.ready;
+  const pctOf = (x) => Math.round(x * 100);
+
+  // One line for the summary: the measured hit rate at this day's lead time.
+  function trackLine(date) {
+    const r = trackRegion(), lead = leadDays(date);
+    if (!trackReady(r) || lead < 0 || lead > 2 || r.leads[lead].hit == null) return '';
+    return `<b>Track record</b> · ${['same-day', 'day-ahead', 'two-day'][lead]} forecasts were within ${f1(track.tol)}${TS}m of the buoys <b>${pctOf(r.leads[lead].hit)}%</b> of the time over the last ${r.days} days`;
+  }
+
+  function renderTrack() {
+    const el = $('#track');
+    if (!el) return;
+    const r = trackRegion();
+    if (!r) { el.innerHTML = ''; return; }
+    const head = `<div class="buoy-head"><h3>Forecast track record</h3><span class="age">${trackReady(r) ? `Last ${r.days} days` : 'Collecting'}</span></div>`;
+    if (!trackReady(r)) {
+      el.innerHTML = `<article class="buoy track">${head}
+        <p class="track-lede">Comparing each forecast with what the buoys measure. ${r.days} of ${track.ready} days so far; the figures appear once there's a week of data.</p>
+        <div class="track-prog" aria-hidden="true"><i style="width:${(r.days / track.ready) * 100}%"></i></div>
+      </article>`;
+      return;
+    }
+    const col = (p) => (p >= 75 ? 'var(--r3)' : p >= 50 ? 'var(--r2)' : 'var(--big)');
+    const cells = r.leads.map((l, k) => {
+      if (l.hit == null) return '';
+      const p = pctOf(l.hit);
+      return `<div style="--c:${col(p)}"><dt>${LEAD_NAMES[k]}</dt><dd>${p}<span class="unit">%</span></dd><dd class="m">${l.n} hours</dd><span class="track-bar" aria-hidden="true"><i style="width:${p}%"></i></span></div>`;
+    }).join('');
+    const ref = r.leads[1].hit != null ? r.leads[1] : r.leads[0];
+    const lean = Math.abs(ref.bias) < 0.05 ? 'has no steady lean big or small'
+      : `runs about ${f1(Math.abs(ref.bias))}${TS}m ${ref.bias < 0 ? 'small' : 'big'}`;
+    el.innerHTML = `<article class="buoy track">${head}
+      <p class="track-lede">How often the forecast was within ${f1(track.tol)}${TS}m of what the ${ui.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast'} buoys measured, ${hourLbl(track.hours[0])}–${hourLbl(track.hours[1] - 1)}.</p>
+      <dl class="buoy-stats track-stats">${cells}</dl>
+      <p class="track-note">Typical miss ${ref.mae.toFixed(2)}${TS}m · the forecast ${lean}. Updated ${whenStr(track.updated)}.</p>
+    </article>`;
   }
 
   function sparkline(obs, fc, key) {

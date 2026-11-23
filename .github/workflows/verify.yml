@@ -1,0 +1,36 @@
+name: Forecast track record
+
+# Twice a day: save past forecasts and buoy readings, score them, commit data/track.json.
+on:
+  schedule:
+    - cron: '17 21 * * *'   # 7:17am Brisbane
+    - cron: '17 9 * * *'    # 7:17pm Brisbane
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Score forecasts against the buoys
+        run: python -I tools/verify.py
+      - name: Commit the data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/verify.json data/track.json
+          if git diff --cached --quiet; then echo 'No change'; exit 0; fi
+          git commit -m 'Update forecast track record'
+          for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
+          exit 1

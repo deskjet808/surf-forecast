@@ -338,6 +338,21 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .spark-x { grid-column: 1; display: flex; justify-content: space-between; margin-top: 7px; font: 400 10px/1 var(--mono); color: var(--tx-3); }
 .buoy-empty { margin: 10px 0 2px; font-size: 13px; color: var(--tx-2); line-height: 1.45; }
 .buoy-note { margin: 4px 2px 0; font-size: 11.5px; color: var(--tx-3); }
+
+/* Track record card (data/track.json) */
+#track:not(:empty) { margin-top: 10px; }
+.track-lede { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--tx-2); }
+.track-stats > div { position: relative; padding-bottom: 9px; }
+.track-stats dd:first-of-type { color: var(--c); font-size: 18px; }
+.track-bar { position: absolute; left: 0; right: 10px; bottom: 0; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.track-stats > div + div .track-bar { left: 10px; }
+.track-bar i { display: block; height: 100%; border-radius: inherit; background: var(--c); }
+.track-note { margin: 11px 0 1px; font: 400 10.5px/1.45 var(--mono); color: var(--tx-3); }
+.track-prog { height: 3px; margin: 12px 0 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.track-prog i { display: block; height: 100%; background: var(--tx-2); }
+.sum-track { margin: 8px 2px 0; font-size: 12px; line-height: 1.45; color: var(--tx-3); }
+.sum-track:empty { display: none; }
+.sum-track b { color: var(--tx-2); font-weight: 500; }
 .buoy.is-loading .buoy-head { min-height: 22px; }
 
 /* ---------- Footer ---------- */
