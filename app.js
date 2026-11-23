@@ -617,51 +617,42 @@
     renderHero(list[0], date);
     renderSummary(list, date);
 
-    // favourites pinned to the top (keeping their score rank number)
-    const ranked = list.map((x, i) => ({ ...x, rank: i + 1 }));
-    const pinned = ranked.filter((x) => isFav(x.sp.spot.id));
-    const rest = ranked.filter((x) => !isFav(x.sp.spot.id));
-    // 3+ flat spots (never favourites) fold into one dimmed row that expands on tap
-    const flats = rest.filter((x) => x.m.best.flag === 'flat');
-    const fold = flats.length >= 3;
-    const ordered = [...pinned, ...(fold ? rest.filter((x) => !flats.includes(x)) : rest)];
-    const rowHtml = ({ sp, m, rank }, i, extra = '') => {
-      const b = m.best, fav = isFav(sp.spot.id);
-      const bars = m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="--c:${colour(h)};--v:${barH(h)}"></i>`).join('');
-      return `<li class="row${fav ? ' is-fav' : ''}${fav && i === pinned.length - 1 ? ' fav-last' : ''}${extra}" data-spot="${sp.spot.id}" style="--i:${i}">
-        <span class="rank">${String(rank).padStart(2, '0')}</span>
-        <span class="name"><span class="nm">${esc(sp.spot.name)}</span>${starBtn(sp.spot.id, sp.spot.name)}</span>
-        <span class="pill" style="--c:${colour(b)}">${label(b)}</span>
-        <span class="why">${esc(cap([...why(b), ...(b.tide ? [tideWord(b.tide)] : [])].join(', ')))}</span>
-        <span class="strip" aria-label="Best at ${hourLbl(b.hour)}, window ${hourLbl(m.hrs[0].hour)} to ${hourLbl(m.hrs[m.hrs.length - 1].hour)}"><span class="spark-m" aria-hidden="true">${bars}</span>${tideSpark(m)}<span class="row-wind" style="color:${windCol(b.wI.cat)}" title="${cmp(b.wind.d)} ${b.wI.cat} ${Math.round(b.wind.s)} km/h">${b.wI.cat === 'glassy' ? '<i class="calm"></i>' : arrow(b.wind.d, 'currentColor', 11)}<span>${Math.round(b.wind.s)}</span></span><span class="at">best <b>${hourLbl(b.hour)}</b></span></span>
-      </li>`;
-    };
-    let html = ordered.map((x, i) => rowHtml(x, i)).join('');
-    if (fold) {
-      const open = !!ui.flatOpen;
-      html += `<li class="flat-more" style="--i:${ordered.length}"><button data-flat-toggle aria-expanded="${open}"><span class="fm-dot" aria-hidden="true"></span><span>${open ? 'Hide ' + flats.length : flats.length + ' more'} spots flat</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></li>`;
-      if (open) html += flats.map((x, k) => rowHtml(x, ordered.length + 1 + k, ' is-flat')).join('');
-    }
-    $('#ranking').innerHTML = html;
+    // Top 5 by score; "Show all" reveals the rest of the region. One list, so no spot appears twice.
+    const TOP = 5;
+    const shownRows = ui.showAll ? list : list.slice(0, TOP);
+    $('#ranking').innerHTML = shownRows.map((x, i) => t5Row(x, i)).join('');
+    $('.top5 h2').textContent = ui.showAll && list.length > TOP ? `All ${list.length} spots` : 'Top 5';
+    const more = $('#show-all');
+    more.hidden = list.length <= TOP;
+    more.setAttribute('aria-expanded', String(!!ui.showAll));
+    more.innerHTML = ui.showAll
+      ? `Show top 5 <svg class="chev up" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>`
+      : `Show all ${list.length} spots <span>+${list.length - TOP}</span> <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>`;
 
     renderBuoys();
     renderSources();
     renderPanes();
   }
 
+  // Wind as a learner reads it: "NE cross", "SW off", or just "Glassy".
+  const windWord = (b) => (b.wI.cat === 'glassy' ? 'Glassy' : `${cmp(b.wind.d)} ${{ offshore: 'off', onshore: 'on' }[b.wI.cat] || b.wI.cat}`);
+
+  // One Top 5 row: rank badge in the rating colour · spot + rating · surf · wind · best hour.
+  function t5Row({ sp, m }, i) {
+    const b = m.best, c = colour(b), fav = isFav(sp.spot.id);
+    const ws = Math.round(b.wind.s);
+    return `<li class="row t5-row${b.flag === 'flat' ? ' is-flat' : ''}${i === 5 ? ' t5-rest' : ''}" data-spot="${sp.spot.id}" style="--i:${i};--c:${c}"
+        aria-label="${i + 1}. ${esc(sp.spot.name)}, ${label(b)}, ${f1(b.surf)} metres, wind ${windWord(b)} ${ws} km/h, best ${hourLbl(b.hour)}">
+      <span class="t5-rank">${i + 1}</span>
+      <span class="name"><span class="nm">${esc(sp.spot.short)}</span>${fav ? '<svg class="t5-fav" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.5l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"/></svg>' : ''}<span class="t5-rate">${label(b)}</span></span>
+      <span class="t5-surf"><span>${U(f1(b.surf), 'm')}</span><small>${Math.round(b.period)}${TS}s</small></span>
+      <span class="t5-wind"><b style="color:${windCol(b.wI.cat)}">${windWord(b)}</b><small>${ws}${TS}km/h</small></span>
+      <span class="t5-at">${hourLbl(b.hour)}</span>
+    </li>`;
+  }
+
   // Bar height for an hour: its score, full height at Epic, with a floor so every hour reads.
   const barH = (h) => clamp(h.score / 0.8, 0.08, 1).toFixed(3);
-
-  // Tiny tide line for a lineup row's morning window, best hour marked.
-  function tideSpark(m) {
-    const hrs = m.hrs, n = hrs.length;
-    if (n < 2 || hrs.some((h) => !h.tide)) return '';
-    const W = 36, H = 14, P = 2;
-    const pts = hrs.map((h, k) => [P + (k / (n - 1)) * (W - 2 * P), H - P - h.tide.norm * (H - 2 * P)]);
-    const d = pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
-    const bp = pts[hrs.indexOf(m.best)];
-    return `<svg class="tide-m" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><path d="${d}"/>${bp ? `<circle cx="${bp[0].toFixed(1)}" cy="${bp[1].toFixed(1)}" r="2"/>` : ''}</svg>`;
-  }
 
   // Hero mini timeline: one column per morning hour, plus the tide as a dashed line.
   function timeline(m) {
@@ -704,9 +695,7 @@
     el.innerHTML = `<div class="hero-in">
         <div class="verdict is-${v}"><span class="v-word">${VERDICT[v]}</span><span class="v-tag">${esc(tagline(b, v))}</span></div>
         <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayLabel(date).top} · ${hourLbl(b.hour)}${confDots(confidence(m))}</span></div>
-        <div class="hero-rating">${label(b)}</div>
-        <div class="hero-name">${esc(sp.spot.name)}</div>
-        <p class="hero-why">${esc(cap(why(b).join(', ')))}.</p>
+        <div class="hero-head"><span class="hero-rating">${label(b)}</span><span class="hero-name">${esc(sp.spot.name)}</span></div>
         ${timeline(m)}
         <div class="stats">
           <div class="stat"><div class="k">Surf</div><div class="v">${U(f1(b.surf), 'm')}</div><div class="s">${cmp(b.main ? b.main.d : b.sw.d)}</div></div>
@@ -1651,8 +1640,13 @@
       if (model) renderHome(); // re-pin the lineup
       return;
     }
-    const flat = t.closest('[data-flat-toggle]');
-    if (flat) { haptic(); ui.flatOpen = !ui.flatOpen; renderHome(); return; }
+    if (t.closest('[data-show-all]')) {
+      if (!model) return;
+      haptic(); ui.showAll = !ui.showAll; renderHome();
+      if (ui.showAll) $('#ranking').querySelectorAll('.t5-row:nth-child(n+6)').forEach((r) => r.classList.add('t5-in'));
+      else $('.top5').scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' });
+      return;
+    }
     const reg = t.closest('.region button');
     if (!model && (reg || t.closest('.day,[data-goday],[data-mday]'))) return; // nothing to switch yet
     if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.date = null; renderHome(); swapIn(); return; }
@@ -1841,9 +1835,9 @@
   const sk = (w, h, extra = '') => `<span class="skel" style="width:${w};height:${h}px;${extra}"></span>`;
   if (!store.get('dawnie:data:v2')) {
     $('#days').innerHTML = Array.from({ length: 3 }, () => `<div class="day sk-day" aria-hidden="true">${sk('54%', 10)}${sk('72%', 14, 'margin-top:8px')}</div>`).join('');
-    $('#hero').innerHTML = `<div class="hero-in sk-hero" aria-hidden="true">${sk('38%', 11)}${sk('52%', 50, 'margin-top:20px;border-radius:12px')}${sk('46%', 22, 'margin-top:10px')}${sk('82%', 12, 'margin-top:16px')}${sk('64%', 12, 'margin-top:7px')}
+    $('#hero').innerHTML = `<div class="hero-in sk-hero" aria-hidden="true">${sk('38%', 11)}${sk('64%', 30, 'margin-top:14px;border-radius:10px')}${sk('100%', 32, 'margin-top:14px;border-radius:6px')}
       <div class="sk-stats">${Array.from({ length: 4 }, () => `<div>${sk('60%', 9)}${sk('78%', 17, 'margin-top:8px')}</div>`).join('')}</div></div>`;
-    $('#ranking').innerHTML = Array.from({ length: 5 }, (_, i) => `<li class="row sk-row" aria-hidden="true" style="--i:${i}"><span class="rank">${String(i + 1).padStart(2, '0')}</span>${sk(`${58 - i * 5}%`, 15)}${sk('64px', 24, 'border-radius:999px')}<span class="sk-why">${sk('88%', 11)}${sk('100%', 4, 'margin-top:12px;border-radius:2px')}</span></li>`).join('');
+    $('#ranking').innerHTML = Array.from({ length: 5 }, (_, i) => `<li class="row t5-row sk-row" aria-hidden="true" style="--i:${i}">${sk('26px', 26, 'border-radius:8px')}<span class="name">${sk(`${72 - i * 6}%`, 13)}${sk('34%', 10, 'margin-top:6px')}</span>${sk('70%', 13)}${sk('80%', 13)}${sk('70%', 13)}</li>`).join('');
     $('#buoys').innerHTML = buoySkel();
   }
   renderUpdated();

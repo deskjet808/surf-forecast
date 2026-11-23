@@ -808,19 +808,6 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 /* ---------- Units: number + thin space + smaller muted unit ---------- */
 .unit { font-size: .72em; font-weight: 400; color: var(--tx-3); letter-spacing: 0; }
 
-/* ---------- Lineup: folded flat spots ---------- */
-.flat-more { border-bottom: 1px solid var(--line); }
-.flat-more button {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 2px 0 0;
-  font-size: 13.5px; color: var(--tx-3); text-align: left;
-}
-.flat-more .fm-dot { width: 22px; display: grid; place-items: center; }
-.flat-more .fm-dot::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--r1); }
-.flat-more svg { width: 14px; height: 14px; margin-left: auto; transition: transform .25s var(--ease); }
-.flat-more button[aria-expanded="true"] svg { transform: rotate(180deg); }
-.flat-more button:active { color: var(--tx-2); }
-.row.is-flat { opacity: .6; }
-
 /* ---------- Lineup row: tide + wind glance ---------- */
 .row .strip { align-items: center; }
 .tide-m { flex: none; display: block; overflow: visible; }
@@ -895,3 +882,52 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 }
 .morning .m-sub > span { white-space: nowrap; }
 .morning .m-sub > span > .unit { display: inline; }
+
+/* ---------- Top 5 (Today, above the Best bet) ---------- */
+.top5 { margin-bottom: var(--sp-5); }
+.top5 .block-head { margin-bottom: 8px; }
+.t5-head, .t5-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 50px 76px 38px; gap: 0 10px; align-items: center; }
+.t5-head { padding: 0 0 7px; }
+.t5-head span { font-size: 9.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); }
+.t5-head span:last-child { text-align: right; }
+.t5-row { padding: 10px 4px 10px; margin: 0 -4px; }
+.t5-rank {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
+  font: 500 12.5px/1 var(--mono); color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent);
+}
+.t5-row:first-child .t5-rank { color: var(--bg); background: var(--c); box-shadow: none; }
+.t5-row .name { display: grid; grid-template-columns: auto auto 1fr; align-items: center; column-gap: 5px; font-size: 15.5px; }
+.t5-row .nm { grid-column: 1; }
+.t5-fav { grid-column: 2; width: 11px; height: 11px; fill: var(--r2); }
+.t5-rate { grid-column: 1 / -1; margin-top: 2px; font: italic 400 15px/1 var(--serif); color: var(--c); letter-spacing: 0; }
+.t5-surf, .t5-wind { display: flex; flex-direction: column; gap: 4px; min-width: 0; white-space: nowrap; }
+.t5-surf { font: 500 14.5px/1 var(--mono); letter-spacing: -0.03em; }
+.t5-wind b { font: 500 12.5px/1 var(--sans); overflow: hidden; text-overflow: ellipsis; }
+.t5-row small { font: 400 10.5px/1 var(--mono); color: var(--tx-3); letter-spacing: -0.01em; }
+.t5-at { text-align: right; font: 500 13px/1 var(--mono); color: var(--tx-2); letter-spacing: -0.02em; }
+.t5-row:first-child .t5-at { color: var(--tx); }
+.t5-row.t5-rest { border-top: 1px dashed var(--line-2); }
+.t5-row.is-flat > * { opacity: .62; } /* on the cells, so the row entrance animation cannot undo it */
+.t5-row.t5-in { animation: swap-in .36s var(--ease) both; animation-delay: calc((var(--i, 5) - 5) * 40ms); }
+.t5-more[hidden] { display: none; }
+.t5-more { margin-top: 10px; height: 42px; font-size: 13.5px; }
+.t5-more .chev { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; color: var(--tx-3); }
+.t5-more .chev.up { transform: rotate(180deg); }
+.sk-row.t5-row .name { display: block; }
+
+/* ---------- Best bet: compact (verdict + hour bars + stats) ---------- */
+.hero { min-height: 0; margin-bottom: var(--sp-5); }
+.hero-in { padding: 14px 16px 13px; }
+.hero .verdict { margin-bottom: 12px; padding-bottom: 11px; }
+.hero .v-tag { font-size: 18px; }
+.hero-head { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin: 10px 0 0; }
+.hero-head .hero-rating { flex: none; font-size: 38px; line-height: 1; margin: 0; }
+.hero-head .hero-name { min-width: 0; font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero .tl { margin: 12px 0 12px; }
+.hero .tl-bars, .hero .tl-tide { height: 32px; }
+.hero .tl-key { display: none; }
+.hero .stats { padding-top: 10px; }
+.hero .stat .v { font-size: 16px; margin-top: 4px; }
+.hero .stat .s { font-size: 11px; }

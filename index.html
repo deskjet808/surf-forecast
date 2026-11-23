@@ -78,14 +78,16 @@
   <div class="pane" id="pane-today" data-pane="today">
     <nav class="days" id="days" aria-label="Morning"></nav>
 
+    <section class="block top5" aria-label="Top spots">
+      <div class="block-head"><h2>Top 5</h2><span class="block-meta" id="window-meta"></span></div>
+      <div class="t5-head" aria-hidden="true"><span></span><span>Spot</span><span>Surf</span><span>Wind</span><span>Best</span></div>
+      <ol id="ranking" class="ranking t5"></ol>
+      <button class="more-btn t5-more" id="show-all" data-show-all hidden></button>
+    </section>
+
     <section id="hero" class="hero" aria-live="polite"></section>
 
     <section class="block summary" id="summary" aria-live="polite"></section>
-
-    <section class="block">
-      <div class="block-head"><h2>The lineup</h2><span class="block-meta" id="window-meta"></span></div>
-      <ol id="ranking" class="ranking"></ol>
-    </section>
 
     <section class="block">
       <div class="block-head"><h2>Buoy check</h2><span class="block-meta">Live vs forecast</span></div>
