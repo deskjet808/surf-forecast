@@ -369,13 +369,48 @@
     return { spots, sun, buoyFc };
   }
 
-  // Mornings from today (or tomorrow once this morning's window has passed) to the end of the outlook.
-  function morningDates(n = C.outlook.days) {
-    const now = nowStr();
-    let start = now.slice(0, 10);
-    if (+now.slice(11, 13) > R.morning.endHour) start = addDays(start, 1);
+  /* ---------------- Day blocks: Dawn / Midday / Arvo ---------------- */
+  // Dawn = first light to 10am, Midday = 10am to 2pm, Arvo = 2pm to dusk. Hours are [from, to).
+  const BLOCKS = [
+    { id: 'dawn', name: 'Dawn', head: 'The morning', range: 'to 10am' },
+    { id: 'mid', name: 'Midday', head: 'Midday', range: '10am–2pm' },
+    { id: 'arvo', name: 'Arvo', head: 'The arvo', range: '2pm–dusk' },
+  ];
+  const blockOf = (id) => BLOCKS.find((b) => b.id === id) || BLOCKS[0];
+  // Minutes (Brisbane, since epoch) for first light and last light on a date.
+  function lightOf(date) {
+    const s = model && model.sun[date], day0 = toMin(date), pad = R.morning.firstLightBeforeSunrise;
+    return {
+      first: s && s.rise ? toMin(s.rise) - pad : day0 + 5 * 60,
+      last: s && s.set ? toMin(s.set) + pad : day0 + 18 * 60 + 30,
+    };
+  }
+  function blockSpan(date, id) {
+    const day0 = toMin(date), L = lightOf(date), split1 = R.morning.endHour, split2 = 14;
+    if (id === 'dawn') return { startH: Math.ceil((L.first - day0) / 60), endH: split1, m0: L.first, m1: day0 + split1 * 60 };
+    if (id === 'mid') return { startH: split1, endH: split2, m0: day0 + split1 * 60, m1: day0 + split2 * 60 };
+    return { startH: split2, endH: Math.floor((L.last - day0) / 60) + 1, m0: day0 + split2 * 60, m1: L.last };
+  }
+  const blockOpen = (date, id) => blockSpan(date, id).m1 > toMin(nowStr());
+  // The block happening now, or the next one (after dusk: tomorrow's dawn).
+  function currentBlock() {
+    const today = nowStr().slice(0, 10);
+    const b = BLOCKS.find((x) => blockOpen(today, x.id));
+    return b ? b.id : 'dawn';
+  }
+
+  // Days for a block, from today (if that block hasn't finished) to the end of the outlook.
+  function blockDates(id = ui.block, n = C.outlook.days) {
+    let start = nowStr().slice(0, 10);
+    if (!blockOpen(start, id)) start = addDays(start, 1);
     const have = model ? new Set(model.spots[0].hours.map((h) => h.date)) : null;
     return Array.from({ length: n }, (_, i) => addDays(start, i)).filter((d) => !have || have.has(d));
+  }
+  // Days with any block still to come (for the spot page).
+  function dayDates(n) {
+    let start = nowStr().slice(0, 10);
+    if (!blockOpen(start, 'arvo')) start = addDays(start, 1);
+    return Array.from({ length: n }, (_, i) => addDays(start, i));
   }
   const leadDays = (d) => Math.round((toMin(d) - toMin(nowStr().slice(0, 10))) / 1440);
   const isTrend = (d) => leadDays(d) + 1 >= C.outlook.trendFromDay;
@@ -415,20 +450,22 @@
     else note = 'models agree';
     return { level, word: CONF[level], note, score };
   }
-  const confDots = (c) => `<span class="conf l${c.level}" title="${c.word} confidence: ${esc(c.note)}"><i></i><i></i><i></i></span>`;
+  // Confidence as a figure: 5–95% (never claims certainty), with the 3 dots for a glance.
+  const confPct = (c) => Math.round(clamp(c.score, 0.05, 0.95) * 100);
+  const confDots = (c) => `<span class="cf" title="${c.word} confidence (${confPct(c)}%): ${esc(c.note)}"><span class="conf l${c.level}" aria-hidden="true"><i></i><i></i><i></i></span><b>${confPct(c)}%</b></span>`;
 
-  function morningFor(sp, date) {
-    const rise = model.sun[date] && model.sun[date].rise;
-    const first = rise ? toMin(rise) - R.morning.firstLightBeforeSunrise : toMin(date + 'T05:00');
-    const startH = Math.ceil((first - toMin(date)) / 60); // first whole hour after first light
+  // Best hour at a spot in one block of one day. Null once that block is over (or no data).
+  function slotFor(sp, date, id = ui.block) {
+    const span = blockSpan(date, id), now = toMin(nowStr());
+    if (span.m1 <= now) return null;
+    const hrs = sp.hours.filter((h) => h.date === date && h.hour >= span.startH && h.hour < span.endH);
     const nowH = nowStr().slice(0, 13);
-    const hrs = sp.hours.filter((h) => h.date === date && h.hour >= startH && h.hour <= R.morning.endHour);
     const live = hrs.filter((h) => h.t.slice(0, 13) >= nowH);
     const pool = live.length ? live : hrs;
     if (!pool.length) return null;
     let best = pool[0];
     for (const h of pool) if (h.score > best.score + 1e-9) best = h;
-    return { date, hrs, best, startH, firstLight: first };
+    return { date, hrs, best, block: id, ...span };
   }
 
   /* ================================================================
@@ -442,6 +479,8 @@
     view: new URLSearchParams(location.search).get('view') || store.get('dawnie:view') || C.ui.detailView,
     windy: store.get('dawnie:windy') || 'waves',
     date: null,      // selected morning ("YYYY-MM-DD"); null = first
+    block: null,     // 'dawn' | 'mid' | 'arvo'; null = whichever is on now
+    blockAuto: true, // follow the clock until the user picks a block
     tableAll: false,
     tideDate: null,
   };
@@ -587,6 +626,7 @@
     $('.region').dataset.active = region;
     document.querySelectorAll('.region button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.region === region)));
     renderUpdated();
+    ensureBlock();
 
     const { dates, ranks } = regionRanks(region);
     if (!dates.length) { renderError(); return; }
@@ -600,19 +640,21 @@
     $('#days').innerHTML = shown.map((i) => {
       const d = dates[i], top = ranks[i][0];
       const named = dayName(d) !== wd(d);
-      return `<button class="day${isTrend(d) ? ' trend' : ''}" role="tab" data-i="${i}" aria-selected="${i === ui.day}"${top ? ` style="--c:${colour(top.m.best)}"` : ''}>
+      const tops3 = blockTops(region, d);
+      const says = BLOCKS.map((b, k) => `${b.name} ${tops3[k] ? label(tops3[k].m.best) : 'over'}`).join(', ');
+      return `<button class="day${isTrend(d) ? ' trend' : ''}" role="tab" data-i="${i}" aria-selected="${i === ui.day}" aria-label="${dayLabel(d).top} ${dayLabel(d).sub}: ${says}"${top ? ` style="--c:${colour(top.m.best)}"` : ''}>
         <span class="d1">${shown.length > 3 && !named ? wd(d) : dayLabel(d).top}</span>
         <span class="d2">${shown.length > 3 && !named ? dm(d) : dayLabel(d).sub}</span>
         <span class="d3">${top ? label(top.m.best) : '–'}</span>
+        <span class="d4" aria-hidden="true">${tops3.map((t, k) => `<i class="${BLOCKS[k].id === ui.block ? 'on' : ''}${t ? '' : ' gone'}" style="--c:${t ? colour(t.m.best) : 'var(--line-2)'}"></i>`).join('')}</span>
       </button>`;
     }).join('');
 
     const list = ranks[ui.day];
     const date = dates[ui.day];
-    const first = list[0] && list[0].m;
-    $('#window-meta').textContent = first
-      ? `${clock('xxxxxxxxxxx' + new Date(first.firstLight * 60000).toISOString().slice(11, 16))} – ${hourLbl(R.morning.endHour)} · ${wd(date)} ${dm(date)}`
-      : '';
+    $('#blk-today').innerHTML = blockSeg(date);
+    const span = blockSpan(date, ui.block);
+    $('#window-meta').textContent = `${blockOf(ui.block).name} ${minClock(span.m0)}–${minClock(span.m1)} · ${wd(date)} ${dm(date)}`;
 
     renderHero(list[0], date);
     renderSummary(list, date);
@@ -637,42 +679,59 @@
   // Wind as a learner reads it: "NE cross", "SW off", or just "Glassy".
   const windWord = (b) => (b.wI.cat === 'glassy' ? 'Glassy' : `${cmp(b.wind.d)} ${{ offshore: 'off', onshore: 'on' }[b.wI.cat] || b.wI.cat}`);
 
+  // Block selection: follow the clock until the user picks one.
+  function ensureBlock() { if (ui.blockAuto || !ui.block) ui.block = currentBlock(); }
+  const minClock = (m) => clock(new Date(m * 60000).toISOString());
+  // Dawn / Midday / Arvo switch, with each block's real hours for the selected day.
+  function blockSeg(date) {
+    return `<div class="seg blk-seg" role="group" aria-label="Time of day">${BLOCKS.map((b) => {
+      const sp = blockSpan(date, b.id);
+      return `<button data-blk="${b.id}" aria-pressed="${b.id === ui.block}" aria-label="${b.name}, ${minClock(sp.m0)} to ${minClock(sp.m1)}">${b.name}</button>`;
+    }).join('')}</div>`;
+  }
+
   // One Top 5 row: rank badge in the rating colour · spot + rating · surf · wind · best hour.
   function t5Row({ sp, m }, i) {
     const b = m.best, c = colour(b), fav = isFav(sp.spot.id);
     const ws = Math.round(b.wind.s);
     return `<li class="row t5-row${b.flag === 'flat' ? ' is-flat' : ''}${i === 5 ? ' t5-rest' : ''}" data-spot="${sp.spot.id}" style="--i:${i};--c:${c}"
-        aria-label="${i + 1}. ${esc(sp.spot.name)}, ${label(b)}, ${f1(b.surf)} metres, wind ${windWord(b)} ${ws} km/h, best ${hourLbl(b.hour)}">
+        aria-label="${i + 1}. ${esc(sp.spot.name)}, ${label(b)}, ${f1(b.surf)} metres, wind ${windWord(b)} ${ws} km/h, best ${hourLbl(b.hour)}, ${confPct(confidence(m))}% confidence">
       <span class="t5-rank">${i + 1}</span>
       <span class="name"><span class="nm">${esc(sp.spot.short)}</span>${fav ? '<svg class="t5-fav" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.5l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"/></svg>' : ''}<span class="t5-rate">${label(b)}</span></span>
       <span class="t5-surf"><span>${U(f1(b.surf), 'm')}</span><small>${Math.round(b.period)}${TS}s</small></span>
       <span class="t5-wind"><b style="color:${windCol(b.wI.cat)}">${windWord(b)}</b><small>${ws}${TS}km/h</small></span>
-      <span class="t5-at">${hourLbl(b.hour)}</span>
+      <span class="t5-at"><b>${hourLbl(b.hour)}</b>${confDots(confidence(m))}</span>
     </li>`;
   }
 
   // Bar height for an hour: its score, full height at Epic, with a floor so every hour reads.
   const barH = (h) => clamp(h.score / 0.8, 0.08, 1).toFixed(3);
 
-  // Hero mini timeline: one column per morning hour, plus the tide as a dashed line.
-  function timeline(m) {
-    const hrs = m.hrs, n = hrs.length;
-    const cols = hrs.map((h) => `<i class="tl-col${h === m.best ? ' best' : ''}" style="--c:${colour(h)};--v:${barH(h)}"></i>`).join('');
-    const hours = hrs.map((h) => `<span class="${h === m.best ? 'best' : ''}">${h.hour % 12 || 12}</span>`).join('');
-    const tideH = hrs.filter((h) => h.tide);
+  // Hero timeline: every hour first light to dusk, the selected block shaded, tide as a dashed line.
+  function timeline(sp, m) {
+    const spans = BLOCKS.map((b) => ({ id: b.id, name: b.name, ...blockSpan(m.date, b.id) }));
+    const hrs = sp.hours.filter((h) => h.date === m.date && h.hour >= spans[0].startH && h.hour < spans[2].endH);
+    const n = hrs.length;
+    if (!n) return '';
+    const inSel = (h) => h.hour >= m.startH && h.hour < m.endH;
+    const cols = hrs.map((h) => `<i class="tl-col${h === m.best ? ' best' : ''}${inSel(h) ? '' : ' dim'}" style="--c:${colour(h)};--v:${barH(h)}"></i>`).join('');
+    const hours = hrs.map((h) => `<span class="${h === m.best ? 'best' : ''}">${h === m.best || h.hour % 2 === 0 ? h.hour % 12 || 12 : ''}</span>`).join('');
+    const k0 = hrs.findIndex(inSel), kn = hrs.filter(inSel).length;
+    const band = k0 >= 0 ? `<span class="tl-band" style="left:${(k0 / n) * 100}%;width:${(kn / n) * 100}%"></span>` : '';
     let tide = '';
-    if (tideH.length === n && n > 1) {
-      // column centres on a 0–100 x scale, tide norm mapped to 10–90% of the bar height
+    if (hrs.every((h) => h.tide) && n > 1) {
       const pts = hrs.map((h, k) => [((k + 0.5) / n) * 100, 46 - (0.1 + 0.8 * h.tide.norm) * 46]);
       const d = pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ');
       tide = `<svg class="tl-tide" viewBox="0 0 100 46" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"/></svg>`;
     }
-    const t0 = hrs[0].tide, t1 = hrs[n - 1].tide;
-    const tideTxt = t0 && t1 ? `${tideWord(t0).replace(' tide', '')} → ${tideWord(t1)}` : '';
+    const blocks = spans.map((x) => {
+      const c = hrs.filter((h) => h.hour >= x.startH && h.hour < x.endH).length;
+      return c ? `<span class="${x.id === m.block ? 'on' : ''}" style="flex:${c}">${x.name}</span>` : '';
+    }).join('');
     return `<div class="tl" aria-hidden="true">
-        <div class="tl-bars">${cols}${tide}</div>
+        <div class="tl-bars">${band}${cols}${tide}</div>
         <div class="tl-hours">${hours}</div>
-        <div class="tl-key"><span>First light → ${hourLbl(R.morning.endHour)}</span>${tide ? `<span><i></i>${esc(cap(tideTxt))}</span>` : ''}</div>
+        <div class="tl-blocks">${blocks}</div>
       </div>`;
   }
 
@@ -685,7 +744,7 @@
 
   function renderHero(top, date) {
     const el = $('#hero');
-    if (!top) { delete el.dataset.spot; el.innerHTML = '<div class="hero-in"><p class="hero-why">No forecast for this morning yet.</p></div>'; return; }
+    if (!top) { delete el.dataset.spot; el.innerHTML = `<div class="hero-in"><p class="hero-why">No forecast for this ${blockOf(ui.block).name.toLowerCase()} yet.</p></div>`; return; }
     const { sp, m } = top, b = m.best;
     el.style.setProperty('--c', colour(b));
     el.dataset.spot = sp.spot.id;
@@ -694,9 +753,9 @@
     const v = verdict(b);
     el.innerHTML = `<div class="hero-in">
         <div class="verdict is-${v}"><span class="v-word">${VERDICT[v]}</span><span class="v-tag">${esc(tagline(b, v))}</span></div>
-        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayLabel(date).top} · ${hourLbl(b.hour)}${confDots(confidence(m))}</span></div>
+        <div class="eyebrow"><span class="eb-l"><span class="live"></span>Best bet</span><span class="eb-r">${dayLabel(date).top} · ${blockOf(m.block).name} ${hourLbl(b.hour)}${confDots(confidence(m))}</span></div>
         <div class="hero-head"><span class="hero-rating">${label(b)}</span><span class="hero-name">${esc(sp.spot.name)}</span></div>
-        ${timeline(m)}
+        ${timeline(sp, m)}
         <div class="stats">
           <div class="stat"><div class="k">Surf</div><div class="v">${U(f1(b.surf), 'm')}</div><div class="s">${cmp(b.main ? b.main.d : b.sw.d)}</div></div>
           <div class="stat"><div class="k">Period</div><div class="v">${U(Math.round(b.period), 's')}</div><div class="s">${b.sw2.h > 0.2 ? `+${f1(b.sw2.h)}${TS}m ${cmp(b.sw2.d)}` : `${cmp(b.sw.d)} swell`}</div></div>
@@ -713,16 +772,22 @@
 
   /* ---------------- Shared: ranked mornings for a region ---------------- */
   let rankMemo = { model: null };
-  function regionRanks(region) {
+  function regionRanks(region, id = ui.block) {
     if (rankMemo.model !== model || rankMemo.now !== nowStr().slice(0, 13)) rankMemo = { model, now: nowStr().slice(0, 13) };
-    if (rankMemo[region]) return rankMemo[region];
-    const dates = morningDates();
+    const key = region + ':' + id;
+    if (rankMemo[key]) return rankMemo[key];
+    const dates = blockDates(id);
     const spots = model.spots.filter((s) => s.spot.region === region);
-    const ranks = dates.map((d) => spots.map((sp) => ({ sp, m: morningFor(sp, d) })).filter((x) => x.m)
+    const ranks = dates.map((d) => spots.map((sp) => ({ sp, m: slotFor(sp, d, id) })).filter((x) => x.m)
       .sort((a, b) => b.m.best.score - a.m.best.score));
     const conf = ranks.map((l) => (l[0] ? confidence(l[0].m) : null));
-    return (rankMemo[region] = { dates, ranks, conf });
+    return (rankMemo[key] = { dates, ranks, conf });
   }
+  // Top spot for each block of a date (null where the block is over).
+  const blockTops = (region, date) => BLOCKS.map((b) => {
+    const r = regionRanks(region, b.id), i = r.dates.indexOf(date);
+    return i < 0 ? null : r.ranks[i][0] || null;
+  });
 
   /* ---------------- Plain-English morning summary ---------------- */
   const sizeWord = (h) => (h < 0.35 ? 'Tiny' : h < 0.7 ? 'Small' : h < 1.1 ? 'Fun-sized' : h < 1.6 ? 'Solid' : 'Big');
@@ -748,10 +813,12 @@
     // wind
     const w0 = h0.wind, w1 = h1.wind;
     const same = w0.s != null && w1.s != null && cmp(w0.d) === cmp(w1.d) && Math.abs(w0.s - w1.s) < 6;
-    out.push(same ? `Wind <b>${windPhrase(w0)}</b> all morning.`
-      : `Wind <b>${windPhrase(w0)}</b> at first light, ${windPhrase(w1)} by ${hourLbl(h1.hour)}.`);
+    const all = { dawn: 'all morning', mid: 'through the middle of the day', arvo: 'all arvo' }[m.block];
+    const from = m.block === 'dawn' ? 'at first light' : `at ${hourLbl(h0.hour)}`;
+    out.push(same ? `Wind <b>${windPhrase(w0)}</b> ${all}.`
+      : `Wind <b>${windPhrase(w0)}</b> ${from}, ${windPhrase(w1)} by ${hourLbl(h1.hour)}.`);
     // tide
-    const turns = tideTurnsIn(s.tidePort, m.firstLight, toMin(date) + R.morning.endHour * 60 + 59);
+    const turns = tideTurnsIn(s.tidePort, m.m0, m.m1);
     if (turns.length) out.push(turns.map((e, i) => `${i ? '' : ''}${e.hi ? 'High' : 'Low'} tide ${clock(e.t)} (${e.h.toFixed(1)} m)`).join(', ') + '.');
     else if (h0.tide && h1.tide) out.push(`Tide ${tideWord(h0.tide).replace(' tide', '')} to ${tideWord(h1.tide)}.`);
     // verdict
@@ -770,7 +837,7 @@
     const txt = summaryText(list, date);
     if (!txt) { el.innerHTML = ''; return; }
     const c = confidence(list[0].m);
-    el.innerHTML = `<div class="block-head"><h2>The morning</h2><span class="block-meta">${wd(date)} ${dm(date)}</span></div>
+    el.innerHTML = `<div class="block-head"><h2>${blockOf(ui.block).head}</h2><span class="block-meta">${wd(date)} ${dm(date)}</span></div>
       <p class="sum-p">${txt}</p>
       <div class="sum-conf">${confDots(c)}<span><b>${c.word} confidence</b> · ${esc(c.note)}</span></div>`;
   }
@@ -797,22 +864,24 @@
           <span class="w-rate">${label(b)}</span>
           <span class="w-spot">${esc(t.sp.spot.short)} · ${hourLbl(b.hour)}</span>
           <span class="w-why">${f1(b.surf)} m ${cmp(b.main ? b.main.d : b.sw.d)} ${Math.round(b.period)} s, ${windPhrase(b.wind)}</span>
-          <span class="w-conf">${confDots(conf[i])}${conf[i].word}</span>
+          <span class="w-conf">${confDots(conf[i])}<span>${conf[i].word}</span></span>
         </button>`;
       }).join('')}</div>`;
     } else {
       const bestI = tops.reduce((a, t, i) => (i > 0 && t && (a < 0 || t.m.best.score > tops[a].m.best.score) ? i : a), -1);
       const t = tops[bestI];
-      watchHtml = `<div class="watch-none">Nothing stands out yet.${t ? ` The pick of the next ${dates.length - 1} mornings is <b>${label(t.m.best).toLowerCase()}</b> at ${esc(t.sp.spot.short)} on ${dayShort(dates[bestI])} ${dm(dates[bestI])}.` : ''}</div>`;
+      watchHtml = `<div class="watch-none">Nothing stands out yet.${t ? ` The pick of the next ${dates.length - 1} days is <b>${label(t.m.best).toLowerCase()}</b> at ${esc(t.sp.spot.short)} on ${dayShort(dates[bestI])} ${dm(dates[bestI])}.` : ''}</div>`;
     }
 
+    const B = blockOf(ui.block);
     el.innerHTML = `
+      ${blockSeg(dates[0])}
       <section class="block">
         <div class="block-head"><h2>Days to watch</h2><span class="block-meta">${regionName}</span></div>
         ${watchHtml}
       </section>
       <section class="block">
-        <div class="block-head"><h2>${dates.length}-day outlook</h2><span class="block-meta">Best of each morning</span></div>
+        <div class="block-head"><h2>${dates.length}-day outlook</h2><span class="block-meta">Best ${B.name.toLowerCase()} spot each day</span></div>
         ${outlookChart(dates, tops, trendAt)}
         <ol class="olist">${dates.map((d, i) => {
           const t = tops[i];
@@ -828,7 +897,7 @@
             ${conf[i] ? confDots(conf[i]) : ''}
           </li>`;
         }).join('')}</ol>
-        <p class="fine o-fine">Each row is the best spot and hour between first light and ${hourLbl(R.morning.endHour)}. Dots show confidence: how well independent wave and wind models agree, faded by how far out it is.</p>
+        <p class="fine o-fine">Each row is the best spot and hour in the ${B.name.toLowerCase()} block (${B.range}). The % and dots are confidence: how closely independent wave and wind models agree, reduced the further out it is. It is not a measured hit rate.</p>
       </section>`;
   }
 
@@ -891,7 +960,7 @@
     const { dates, ranks } = regionRanks(ui.region);
     const list = ranks[ui.day] || [];
     $('#map-days').innerHTML = miniDays(dates, ranks);
-    $('#map-meta').textContent = `${dayName(dates[ui.day])} ${dm(dates[ui.day])} · best hour`;
+    $('#map-meta').textContent = `${dayName(dates[ui.day])} ${dm(dates[ui.day])} · ${blockOf(ui.block).name}`;
     renderWindy();
     try { await loadLeaflet(); } catch {
       $('#spotmap').innerHTML = '<p class="map-err">The map couldn’t load. Check your connection and try again.</p>';
@@ -1283,7 +1352,8 @@
   function renderDetail(sp) {
     const s = sp.spot, el = $('#detail');
     const port = C.tides[s.tidePort].name;
-    const mornings = morningDates(3).map((d) => morningFor(sp, d)).filter(Boolean);
+    ensureBlock();
+    const days = dayDates(3).map((d) => ({ d, slots: BLOCKS.map((b) => slotFor(sp, d, b.id)) })).filter((x) => x.slots.some(Boolean));
     const win = `${cmp(s.swell.ideal - s.swell.spread)}–${cmp(s.swell.ideal + s.swell.spread)}`;
     el.innerHTML = `
       <div class="d-top">
@@ -1306,16 +1376,22 @@
         <p class="d-note">${esc(s.note)}</p>
       </header>
       <section class="d-sec">
-        <div class="d-sec-head"><h2>Next mornings</h2><span>First light – ${hourLbl(R.morning.endHour)}</span></div>
-        <div class="mornings">${mornings.map((m) => {
-          const b = m.best;
+        <div class="d-sec-head"><h2>Next 3 days</h2><span>Dawn · Midday · Arvo</span></div>
+        <div class="mornings">${days.map(({ d, slots }) => {
+          const live = slots.filter(Boolean);
+          const top = live.reduce((x, y) => (y.best.score > x.best.score ? y : x));
           return `
-          <article class="morning" style="--c:${colour(b)}">
-            <div class="m-day">${dayLabel(m.date).top}<span>${dayLabel(m.date).sub}</span>${confDots(confidence(m))}</div>
-            <div class="m-rate">${label(b)}</div>
-            <div class="m-strip" aria-hidden="true">${m.hrs.map((h) => `<i class="${h === b ? 'best' : ''}" style="background:${colour(h)}"></i>`).join('')}</div>
-            <div class="m-sub"><span>${U(f1(b.surf), 'm')} ${U(Math.round(b.period), 's')}</span>
-              <span>${hourLbl(b.hour)}<em style="color:${windCol(b.wI.cat)}">${arrow(b.wind.d, 'currentColor', 10)}${Math.round(b.wind.s)}</em></span></div>
+          <article class="morning day3" style="--c:${colour(top.best)}">
+            <div class="m-day">${dayLabel(d).top}<span>${dayLabel(d).sub}</span>${confDots(confidence(top))}</div>
+            <ul class="m-blocks">${slots.map((m, k) => {
+              if (!m) return `<li class="gone"><span class="mb-n">${BLOCKS[k].name}</span><span class="mb-r">Over</span></li>`;
+              const b = m.best;
+              return `<li class="${m === top ? 'is-top' : ''}" style="--c:${colour(b)}" aria-label="${BLOCKS[k].name}: ${label(b)}, ${f1(b.surf)} metres at ${hourLbl(b.hour)}, wind ${windWord(b)}">
+                <span class="mb-n">${BLOCKS[k].name}<em>${hourLbl(b.hour)}</em></span>
+                <span class="mb-r">${label(b)}</span>
+                <span class="mb-s">${U(f1(b.surf), 'm')} <i style="color:${windCol(b.wI.cat)}">${windWord(b)}</i></span>
+              </li>`;
+            }).join('')}</ul>
           </article>`;
         }).join('')}
         </div>
@@ -1648,7 +1724,9 @@
       return;
     }
     const reg = t.closest('.region button');
-    if (!model && (reg || t.closest('.day,[data-goday],[data-mday]'))) return; // nothing to switch yet
+    if (!model && (reg || t.closest('.day,[data-goday],[data-mday],[data-blk]'))) return; // nothing to switch yet
+    const blk = t.closest('[data-blk]');
+    if (blk) { if (blk.dataset.blk !== ui.block) haptic(); ui.block = blk.dataset.blk; ui.blockAuto = false; renderHome(); swapIn(); return; }
     if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.date = null; renderHome(); swapIn(); return; }
     const day = t.closest('.day');
     if (day) { if (day.dataset.i && +day.dataset.i !== ui.day) { haptic(); pickDay(+day.dataset.i); renderHome(); swapIn(); } return; }

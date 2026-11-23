@@ -15,3 +15,11 @@ A longboard dawn-patrol surf forecast for the Sunshine Coast and Gold Coast (Que
 - **The morning**: a plain-English summary under the hero on Today.
 - **Map tab**: spot pins coloured by rating (Leaflet + OpenStreetMap tiles), plus Windy's free embed for swell, wind and rain.
 - **Spot pages**: a tide planner for any date MSQ has published, plus a spot guide and links to free cams (`guides.js`).
+
+## Dawn, Midday and Arvo
+
+Every day is split into three blocks: **Dawn** (first light to 10am), **Midday** (10am to 2pm) and **Arvo** (2pm to 25 minutes after sunset). The switch on Today and Outlook ranks spots for the chosen block and opens on whichever block is on now. A block that has finished for today moves on to tomorrow.
+
+## Confidence %
+
+Each rating shows a confidence figure (5–95%) with three dots. It comes from how closely independent wave models (default, GFS, ECMWF) and wind models (ECMWF, GFS) agree for those hours, reduced the further out the day is. It is an estimate of agreement, not a measured hit rate.

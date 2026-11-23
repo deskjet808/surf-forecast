@@ -92,8 +92,8 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin: 2px 0 var(--sp-5); }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand > div { min-width: 0; }
-.brand-mark { width: 30px; height: 30px; color: var(--acc); flex: none; }
-.brand h1 { font: 500 25px/1 var(--sans); letter-spacing: -0.025em; }
+.brand-mark { width: 32px; height: 32px; color: var(--acc); flex: none; }
+.brand h1 { font: 500 28px/1 var(--sans); letter-spacing: -0.025em; }
 .sub { display: flex; align-items: center; gap: 6px; margin: 5px 0 0; color: var(--tx-3); font: 400 11px/1 var(--mono); letter-spacing: .02em; min-height: 14px; }
 .sub > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sub .sd { display: none; width: 6px; height: 6px; border-radius: 50%; flex: none; }
@@ -603,7 +603,7 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .sum-p { margin: 0 2px; font-size: 15px; line-height: 1.6; color: var(--tx-2); text-wrap: pretty; }
 .sum-p b { color: var(--tx); font-weight: 500; }
 .sum-conf { display: flex; align-items: center; gap: 8px; margin: 12px 2px 0; font-size: 12px; color: var(--tx-3); }
-.sum-conf .conf { margin-left: 0; }
+.sum-conf .cf { margin-left: 0; }
 .sum-conf b { color: var(--tx-2); font-weight: 500; }
 
 /* ---------- Outlook ---------- */
@@ -623,7 +623,7 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .w-spot { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .w-why { font: 400 11px/1.35 var(--mono); color: var(--tx-3); margin-top: 4px; letter-spacing: -0.01em; }
 .w-conf { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 10px; font-size: 11px; color: var(--tx-3); }
-.w-conf .conf { margin-left: 0; }
+.w-conf .cf { margin-left: 0; }
 .watch.trend .w-rate { opacity: .75; }
 .watch-none { padding: 16px; border-radius: 16px; border: 1px dashed var(--line-2); color: var(--tx-2); font-size: 14px; line-height: 1.5; }
 .watch-none b { color: var(--tx); font-weight: 500; }
@@ -733,7 +733,7 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .cam span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cam .ext { width: 15px; height: 15px; color: var(--tx-3); }
 .cam-note { margin-top: 10px; }
-.morning .m-day .conf { margin: 6px 0 0; }
+.morning .m-day .cf { margin: 7px 0 0; }
 .cd.trend .cd-in { opacity: .6; }
 .cd-t { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); margin-left: 4px; }
 .chart .c-trend { fill: var(--bg); opacity: .3; }
@@ -886,11 +886,11 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 /* ---------- Top 5 (Today, above the Best bet) ---------- */
 .top5 { margin-bottom: var(--sp-5); }
 .top5 .block-head { margin-bottom: 8px; }
-.t5-head, .t5-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 50px 76px 38px; gap: 0 10px; align-items: center; }
+.t5-head, .t5-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 48px 72px 52px; gap: 0 10px; align-items: center; }
 .t5-head { padding: 0 0 7px; }
 .t5-head span { font-size: 9.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); }
 .t5-head span:last-child { text-align: right; }
-.t5-row { padding: 10px 4px 10px; margin: 0 -4px; }
+.t5-row { padding: 9px 4px; margin: 0 -4px; }
 .t5-rank {
   display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
   font: 500 12.5px/1 var(--mono); color: var(--c);
@@ -906,7 +906,9 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .t5-surf { font: 500 14.5px/1 var(--mono); letter-spacing: -0.03em; }
 .t5-wind b { font: 500 12.5px/1 var(--sans); overflow: hidden; text-overflow: ellipsis; }
 .t5-row small { font: 400 10.5px/1 var(--mono); color: var(--tx-3); letter-spacing: -0.01em; }
-.t5-at { text-align: right; font: 500 13px/1 var(--mono); color: var(--tx-2); letter-spacing: -0.02em; }
+.t5-at { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; font: 500 13px/1 var(--mono); color: var(--tx-2); letter-spacing: -0.02em; }
+.t5-at b { font-weight: 500; }
+.t5-at .cf { margin: 0; }
 .t5-row:first-child .t5-at { color: var(--tx); }
 .t5-row.t5-rest { border-top: 1px dashed var(--line-2); }
 .t5-row.is-flat > * { opacity: .62; } /* on the cells, so the row entrance animation cannot undo it */
@@ -931,3 +933,43 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .hero .stats { padding-top: 10px; }
 .hero .stat .v { font-size: 16px; margin-top: 4px; }
 .hero .stat .s { font-size: 11px; }
+
+/* ---------- Confidence figure: dots + % ---------- */
+.cf { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; vertical-align: 1px; white-space: nowrap; }
+.cf .conf { margin: 0; }
+.cf b { font: 500 10.5px/1 var(--mono); color: var(--tx-2); letter-spacing: -0.02em; }
+
+/* ---------- Dawn / Midday / Arvo switch ---------- */
+.blk-seg { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; margin: -4px 0 var(--sp-4); }
+.blk-seg button { min-height: 38px; padding: 0 6px; font-size: 13px; }
+#pane-outlook > .blk-seg { margin-top: 0; }
+
+/* day tabs: the three blocks as a strip under the rating */
+.day .d4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 9px; align-items: end; height: 6px; }
+.day .d4 i { height: 3px; border-radius: 2px; background: var(--c); opacity: .55; }
+.day .d4 i.on { height: 6px; opacity: 1; }
+.day .d4 i.gone { opacity: .5; }
+.days.four .day .d4 { margin-top: 7px; }
+
+/* ---------- Hero timeline: first light to dusk ---------- */
+.hero .tl-bars { gap: 3px; }
+.hero .tl-hours { gap: 3px; }
+.tl-col.dim { opacity: .38; }
+.tl-band { position: absolute; top: -4px; bottom: 0; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--c) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 18%, transparent); pointer-events: none; }
+.tl-blocks { display: flex; gap: 3px; margin-top: 7px; }
+.tl-blocks span { min-width: 0; text-align: center; font-size: 9.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--tx-3); padding-top: 5px; border-top: 1px solid var(--line-2); white-space: nowrap; overflow: hidden; }
+.tl-blocks span.on { color: var(--c); border-top-color: var(--c); }
+
+/* ---------- Spot page: next 3 days, three blocks each ---------- */
+.morning.day3 { padding-bottom: 6px; }
+.m-blocks { list-style: none; margin: 10px 0 0; padding: 0; }
+.m-blocks li { --c: var(--tx-3); display: flex; flex-direction: column; gap: 3px; padding: 8px 0 8px 9px; border-top: 1px solid var(--line); position: relative; }
+.m-blocks li::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 2px; border-radius: 1px; background: var(--c); opacity: .7; }
+.m-blocks li.is-top::before { opacity: 1; width: 3px; }
+.mb-n { display: flex; justify-content: space-between; gap: 4px; font-size: 9.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--tx-3); }
+.mb-n em { font: 400 10px/1 var(--mono); font-style: normal; letter-spacing: 0; text-transform: none; color: var(--tx-2); }
+.mb-r { font: italic 400 20px/1 var(--serif); color: var(--c); white-space: nowrap; }
+.mb-s { display: flex; flex-wrap: wrap; gap: 0 5px; font: 400 10.5px/1.3 var(--mono); color: var(--tx-2); letter-spacing: -0.01em; }
+.mb-s i { font-style: normal; font-family: var(--sans); font-size: 10.5px; white-space: nowrap; }
+.m-blocks li.gone .mb-r { font-size: 15px; color: var(--tx-3); }
+.m-blocks li.gone::before { display: none; }
