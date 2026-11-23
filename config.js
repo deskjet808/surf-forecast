@@ -51,8 +51,11 @@ window.DAWNIE = {
        25 % of the score (a short-period day can still be fun if it's clean). */
     periodFloor: 0.25,
 
-    /* Point breaks need period to wrap: swell reaching a 'point' is multiplied
-       by clamp((period - from) / range, floor, 1). 6 s ≈ 30 %, 10 s+ = 100 %. */
+    /* Point breaks need period to wrap. The period factor is
+       clamp((period - from) / range, floor, 1): 6 s ≈ 30 %, 10 s+ = 100 %.
+       Each point's `wrap` (0–1) sets how much that factor applies there:
+       swell × (1 − wrap × (1 − factor)). Noosa needs long period (high wrap);
+       the Gold Coast points take short-period E swell well (low wrap). */
     pointWrap: { from: 6, range: 4, floor: 0.3 },
 
     /* Longer period swell shows bigger on the beach. Multiplies the open-ocean
@@ -110,6 +113,8 @@ window.DAWNIE = {
      sizeFactor   how much of the open-ocean swell actually reaches the break
                   (wrapping points like Noosa only get part of it)
      tide         low | lowmid | mid | midhigh | high | all
+     wrap         points only: 0–1, how much short-period swell is lost wrapping in
+                  (1 = full pointWrap penalty, 0 = none; default 1)
      maxSize      optional: break height (m) above which it's 'Too big' for you here
      buoy         nearest Qld Govt wave buoy (see BUOYS)
      tidePort     key into TIDES
@@ -119,31 +124,31 @@ window.DAWNIE = {
     // Coordinates: OpenStreetMap features + wannasurf GPS, take-off offset by hand (±50–150 m).
     { id: 'first-point', name: 'Noosa First Point', short: 'First Point', region: 'sc', type: 'point',
       lat: -26.38420, lon: 153.09430, faces: 355, offshore: 180,
-      swell: { ideal: 80, spread: 40 }, sizeFactor: 0.55, tide: 'all',
+      swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.55, tide: 'all',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: 'The longboard mecca. Sand-bottom right that needs E–NE swell to wrap the headland. Glassy in SE–S winds; NE wind blows it out.' },
 
     { id: 'nationals', name: 'National Park', short: 'Nationals', region: 'sc', type: 'point',
       lat: -26.37890, lon: 153.10040, faces: 340, offshore: 170,
-      swell: { ideal: 80, spread: 40 }, sizeFactor: 0.62, tide: 'lowmid',
+      swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.62, tide: 'lowmid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: 'Most consistent of the inner points, from Boiling Pot towards Little Cove. Holds more swell than First Point; sheltered in SE winds.' },
 
     { id: 'tea-tree', name: 'Tea Tree Bay', short: 'Tea Tree', region: 'sc', type: 'point',
       lat: -26.37800, lon: 153.10690, faces: 330, offshore: 160,
-      swell: { ideal: 75, spread: 40 }, sizeFactor: 0.6, tide: 'mid',
+      swell: { ideal: 75, spread: 40 }, wrap: 0.7, sizeFactor: 0.6, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: 'Long, gentle right over rock and sand into the bay. Needs E–NE swell, protected from SE winds. Busy with loggers when on.' },
 
     { id: 'alex', name: 'Alexandra Headland', short: 'Alex', region: 'sc', type: 'point',
       lat: -26.67150, lon: 153.11250, faces: 45, offshore: 225,
-      swell: { ideal: 120, spread: 50 }, sizeFactor: 0.85, tide: 'mid',
+      swell: { ideal: 120, spread: 50 }, wrap: 0.3, sizeFactor: 0.85, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: 'Right off the bluff into Alex beach plus beach peaks. Likes SE groundswell; SE wind is cross-shore, so go early or in S–SW winds.' },
 
     { id: 'moffat', name: 'Moffat Beach', short: 'Moffat', region: 'sc', type: 'point',
       lat: -26.79010, lon: 153.14670, faces: 55, offshore: 235,
-      swell: { ideal: 105, spread: 50 }, sizeFactor: 0.85, tide: 'all',
+      swell: { ideal: 105, spread: 50 }, wrap: 0.3, sizeFactor: 0.85, tide: 'all',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
       note: 'Soft, peeling rights over a sloping rock shelf — a logger favourite. E or wrapping SE swell; some shelter in S–SE winds.' },
 
@@ -162,25 +167,25 @@ window.DAWNIE = {
     // ---------------- Gold Coast ----------------
     { id: 'currumbin', name: 'Currumbin Alley', short: 'Currumbin', region: 'gc', type: 'point',
       lat: -28.12450, lon: 153.48720, faces: 40, offshore: 220,
-      swell: { ideal: 110, spread: 45 }, sizeFactor: 0.75, tide: 'lowmid',
+      swell: { ideal: 110, spread: 45 }, wrap: 0.15, sizeFactor: 0.75, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
       note: 'Gentle sand-bottom right off Currumbin Rock into the creek mouth. Sheltered from SE — the go-to small-wave log spot. Strong rip on the run-out.' },
 
     { id: 'rainbow', name: 'Rainbow Bay', short: 'Rainbow', region: 'gc', type: 'point',
       lat: -28.16300, lon: 153.54760, faces: 345, offshore: 180,
-      swell: { ideal: 115, spread: 45 }, sizeFactor: 0.7, tide: 'all',
+      swell: { ideal: 115, spread: 45 }, wrap: 0.2, sizeFactor: 0.7, tide: 'all',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
       note: 'The softer inside of the Superbank below Snapper. E–SE swell wraps in; stays clean in SE–S winds.' },
 
     { id: 'kirra', name: 'Kirra', short: 'Kirra', region: 'gc', type: 'point',
       lat: -28.16480, lon: 153.53530, faces: 5, offshore: 180, maxSize: 1.2,
-      swell: { ideal: 120, spread: 40 }, sizeFactor: 0.75, tide: 'lowmid',
+      swell: { ideal: 120, spread: 40 }, wrap: 0.5, sizeFactor: 0.75, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
       note: 'Fast, hollow right off the groyne. Needs solid E–SE swell; only a longboard wave on small days.' },
 
     { id: 'burleigh', name: 'Burleigh Heads', short: 'Burleigh', region: 'gc', type: 'point',
       lat: -28.09000, lon: 153.45720, faces: 55, offshore: 225, maxSize: 1.3,
-      swell: { ideal: 130, spread: 45 }, sizeFactor: 0.85, tide: 'lowmid',
+      swell: { ideal: 130, spread: 45 }, wrap: 0.15, sizeFactor: 0.85, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
       note: 'Powerful right over sand and boulders. Longboard it small or on the inside; sheltered from S–SE winds.' },
 

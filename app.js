@@ -206,7 +206,10 @@
     for (const c of [h.sw, h.sw2]) {
       if (!(c && c.h > 0.05)) continue;
       let ex = dirFactor(spot, c.d);
-      if (spot.type === 'point') { const P = R.pointWrap; ex *= clamp(((c.p || 8) - P.from) / P.range, P.floor, 1); }
+      if (spot.type === 'point') {
+        const P = R.pointWrap, f = clamp(((c.p || 8) - P.from) / P.range, P.floor, 1);
+        ex *= 1 - (spot.wrap ?? 1) * (1 - f);
+      }
       const boost = clamp(B.base + B.perSecond * (c.p || 8), B.lo, B.hi);
       comps.push({ ...c, ex, eff: c.h * ex * boost * spot.sizeFactor });
     }
