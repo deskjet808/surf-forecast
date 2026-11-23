@@ -1,4 +1,4 @@
-# Surf Cowabunga
+# Cowabunga
 
 A longboard dawn-patrol surf forecast for the Sunshine Coast and Gold Coast (Queensland). It's a static page with no build step, hosted on GitHub Pages.
 

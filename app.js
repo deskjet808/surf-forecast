@@ -1,4 +1,4 @@
-/* Surf Cowabunga — longboard dawn-patrol forecast. No build step, no dependencies.
+/* Cowabunga — longboard dawn-patrol forecast. No build step, no dependencies.
    Rating rules live in config.js. */
 (() => {
   'use strict';
@@ -558,7 +558,7 @@
     $('#hero').innerHTML = `<div class="hero-in state">
       <svg class="state-ic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="21" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 31c4.5 0 4.5-3 9-3s4.5 3 9 3 4.5-3 9-3 4.5 3 9 3M6 37c4.5 0 4.5-3 9-3s4.5 3 9 3 4.5-3 9-3 4.5 3 9 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 9l30 30" stroke="var(--big)" stroke-width="1.6" stroke-linecap="round"/></svg>
       <h3 class="state-title">${off ? "You're offline" : "Can't reach the forecast"}</h3>
-      <p class="state-body">${off ? "There's no saved forecast on this phone yet. Surf Cowabunga will load the lineup as soon as you're back online." : "The forecast servers didn't answer. It's usually brief — give it a moment and try again."}</p>
+      <p class="state-body">${off ? "There's no saved forecast on this phone yet. Cowabunga will load the lineup as soon as you're back online." : "The forecast servers didn't answer. It's usually brief — give it a moment and try again."}</p>
       <button class="btn" data-retry>Try again</button>
     </div>`;
     $('#ranking').innerHTML = '';
