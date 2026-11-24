@@ -510,7 +510,23 @@
 
   // Saved forecasts line up with the spot and buoy list by position, so a saved copy from a different list is thrown away.
   const SPOT_KEY = [...C.spots.map((s) => s.id), ...C.buoys.map((b) => b.site)].join(',');
-  const savedData = () => { const d = store.get('dawnie:data:v2'); return d && d.key === SPOT_KEY ? d : null; };
+  // Nearby spots share a model grid cell, so many hourly blocks are identical: save each one once.
+  function packRaw(raw) {
+    const pool = [], seen = new Map();
+    const ref = (o) => { if (!o) return o; const k = JSON.stringify(o); if (!seen.has(k)) { seen.set(k, pool.length); pool.push(o); } return { $r: seen.get(k) }; };
+    const loc = (a) => a && a.map((x) => ({ ...x, hourly: ref(x.hourly) }));
+    const ext = raw.ext && Object.fromEntries(Object.entries(raw.ext).map(([k, a]) => [k, a.map(ref)]));
+    return { ...raw, marine: loc(raw.marine), wind: loc(raw.wind), ext, $pool: pool };
+  }
+  function unpackRaw(p) {
+    if (!p || !p.$pool) return p;
+    const get = (o) => (o && o.$r != null ? p.$pool[o.$r] : o);
+    const loc = (a) => a && a.map((x) => ({ ...x, hourly: get(x.hourly) }));
+    const ext = p.ext && Object.fromEntries(Object.entries(p.ext).map(([k, a]) => [k, a.map(get)]));
+    const { $pool, ...raw } = p;
+    return { ...raw, marine: loc(p.marine), wind: loc(p.wind), ext };
+  }
+  const savedData = () => { const d = store.get('dawnie:data:v2'); return d && d.key === SPOT_KEY ? { ...d, raw: unpackRaw(d.raw) } : null; };
 
   async function load(force) {
     if (net.busy) return;
@@ -564,7 +580,7 @@
     raw = next;
     if (gotForecast) {
       raw.fetchedAt = Date.now();
-      store.set('dawnie:data:v2', { ts: Date.now(), raw, key: SPOT_KEY });
+      store.set('dawnie:data:v2', { ts: Date.now(), raw: packRaw(raw), key: SPOT_KEY });
     }
     model = buildModel(raw);
     if (force && gotForecast) net.flash = Date.now();

@@ -1,5 +1,125 @@
 /* Spot guides and free cam links. Written for a learner on a 9'6". Cam availability checked 23/11/2026. */
 window.DAWNIE_GUIDES = {
+  "teewah": {
+    "cams": [{ "name": "Surfline · Teewah Beach", "url": "https://www.surfline.com/surf-report/teewah-beach/640b8fcfb6d76961d491e550" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "noosa-north-shore": {
+    "cams": [{ "name": "Surfline · Noosa North Shore", "url": "https://www.surfline.com/surf-report/noosa-north-shore/5d810f286a77040001d6dd55" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "noosa-bar": {
+    "cams": [{ "name": "Surfline · Noosa Bar", "url": "https://www.surfline.com/surf-report/noosa-bar/5d7c174756ef990001aa1ef4" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "noosa-main": {
+    "cams": [{ "name": "Surfline · Noosa Main Beach", "url": "https://www.surfline.com/surf-report/noosa-main-beach/621941d050f0353bb2afa908" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "granite-bay": {
+    "cams": [{ "name": "Surfline · Granite Bay", "url": "https://www.surfline.com/surf-report/granite-bay/640b8fd4de81d53eeb0b0a15" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "alexandria-bay": {
+    "cams": [{ "name": "Surfline · Alexandria Bay", "url": "https://www.surfline.com/surf-report/alexandria-bay/640b8f818284fe4ad3ae4c5d" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "sunshine-beach": {
+    "cams": [{ "name": "Surfline · Sunshine Beach", "url": "https://www.surfline.com/surf-report/sunshine-beach/5d81683d213f4400014af35d" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "castaways": {
+    "cams": [{ "name": "Surfline · Castaways Beach", "url": "https://www.surfline.com/surf-report/castaways-beach/640b8fb1e9203039fade82e1" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "peregian": {
+    "cams": [{ "name": "Surfline · Peregian Beach", "url": "https://www.surfline.com/surf-report/peregian-beach/5d8111538f401200012d9cce" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "point-arkwright": {
+    "cams": [{ "name": "Surfline · Point Arkwright", "url": "https://www.surfline.com/surf-report/point-arkwright/584204204e65fad6a770928a" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "yaroomba": {
+    "cams": [{ "name": "Surfline · Yaroomba", "url": "https://www.surfline.com/surf-report/yaroomba/640b8fabde81d541020aff3c" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "coolum": {
+    "cams": [{ "name": "Surfline · Coolum Beach", "url": "https://www.surfline.com/surf-report/coolum-beach/584204204e65fad6a770928d" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "marcoola": {
+    "cams": [{ "name": "Surfline · Marcoola", "url": "https://www.surfline.com/surf-report/marcoola/584204204e65fad6a770928b" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "old-woman-ledge": {
+    "cams": [{ "name": "Surfline · Old Woman Ledge", "url": "https://www.surfline.com/surf-report/old-woman-ledge/584204204e65fad6a7709288" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "old-woman-ledge-south": {
+    "cams": [{ "name": "Surfline · Old Woman Ledge (South)", "url": "https://www.surfline.com/surf-report/old-woman-ledge-south/584204204e65fad6a770929a" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "mudjimba": {
+    "cams": [{ "name": "Surfline · Mudjimba Beach", "url": "https://www.surfline.com/surf-report/mudjimba-beach/584204204e65fad6a770928e" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "pincushion": {
+    "cams": [{ "name": "Surfline · Pincushion", "url": "https://www.surfline.com/surf-report/pincushion/584204204e65fad6a770928c" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "maroochydore": {
+    "cams": [{ "name": "Surfline · Maroochydore", "url": "https://www.surfline.com/surf-report/maroochydore/584204204e65fad6a7709289" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "the-bluff": {
+    "cams": [{ "name": "Surfline · The Bluff", "url": "https://www.surfline.com/surf-report/the-bluff/584204204e65fad6a770929c" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "mooloolaba": {
+    "cams": [{ "name": "Surfline · Mooloolaba Beach", "url": "https://www.surfline.com/surf-report/mooloolaba-beach/5842041f4e65fad6a7708bec" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "point-cartwright": {
+    "cams": [{ "name": "Surfline · Point Cartwright", "url": "https://www.surfline.com/surf-report/point-cartwright/584204204e65fad6a770929d" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "kawana": {
+    "cams": [{ "name": "Surfline · Kawana – Buddina", "url": "https://www.surfline.com/surf-report/kawana-buddina/584204204e65fad6a77092a0" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "warana": {
+    "cams": [{ "name": "Surfline · Warana", "url": "https://www.surfline.com/surf-report/warana/584204204e65fad6a77092a1" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "long-track": {
+    "cams": [{ "name": "Surfline · Long Track", "url": "https://www.surfline.com/surf-report/long-track/640b8f8d606c45025ef14237" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "wurtulla": {
+    "cams": [{ "name": "Surfline · Wurtulla Rocks", "url": "https://www.surfline.com/surf-report/wurtulla-rocks/584204204e65fad6a77092a3" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "ann-street": {
+    "cams": [{ "name": "Surfline · Ann Street Reef", "url": "https://www.surfline.com/surf-report/ann-street-reef/584204204e65fad6a77092a2" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "dicky": {
+    "cams": [{ "name": "Surfline · Dicky Beach", "url": "https://www.surfline.com/surf-report/dicky-beach/584204204e65fad6a77092a4" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "shellys": {
+    "cams": [{ "name": "Surfline · Shelly Beach", "url": "https://www.surfline.com/surf-report/shelly-beach/584204204e65fad6a77092a8" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "wickham-point": {
+    "cams": [{ "name": "Surfline · Wickham Point", "url": "https://www.surfline.com/surf-report/wickham-point/584204204e65fad6a77092ac" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
+  "caloundra-bar": {
+    "cams": [{ "name": "Surfline · Caloundra Bar", "url": "https://www.surfline.com/surf-report/caloundra-bar/5842041f4e65fad6a7708bea" }],
+    "camNote": "Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
   "first-point": {
     "paddle": "Paddle out from the sand at the eastern end of Main Beach and go wide of the take-off, rather than straight through the lineup.",
     "hazards": "Rocks along the point, a steady sweep down towards Main Beach, and lots of boards and surf-school students in a small area.",
