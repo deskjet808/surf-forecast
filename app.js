@@ -508,12 +508,16 @@
     renderUpdated();
   }
 
+  // Saved forecasts line up with the spot and buoy list by position, so a saved copy from a different list is thrown away.
+  const SPOT_KEY = [...C.spots.map((s) => s.id), ...C.buoys.map((b) => b.site)].join(',');
+  const savedData = () => { const d = store.get('dawnie:data:v2'); return d && d.key === SPOT_KEY ? d : null; };
+
   async function load(force) {
     if (net.busy) return;
     fetchTrack();
     const started = Date.now();
     setBusy(true);
-    const cached = store.get('dawnie:data:v2');
+    const cached = savedData();
     const fresh = cached && Date.now() - cached.ts < C.ui.cacheMinutes * 60e3;
     let cacheOk = false;
     if (cached && !raw) {
@@ -560,7 +564,7 @@
     raw = next;
     if (gotForecast) {
       raw.fetchedAt = Date.now();
-      store.set('dawnie:data:v2', { ts: Date.now(), raw });
+      store.set('dawnie:data:v2', { ts: Date.now(), raw, key: SPOT_KEY });
     }
     model = buildModel(raw);
     if (force && gotForecast) net.flash = Date.now();
@@ -1972,7 +1976,7 @@
 
   // first paint: skeletons shaped like the real layout, so nothing jumps when data lands
   const sk = (w, h, extra = '') => `<span class="skel" style="width:${w};height:${h}px;${extra}"></span>`;
-  if (!store.get('dawnie:data:v2')) {
+  if (!savedData()) {
     $('#days').innerHTML = Array.from({ length: 3 }, () => `<div class="day sk-day" aria-hidden="true">${sk('54%', 10)}${sk('72%', 14, 'margin-top:8px')}</div>`).join('');
     $('#hero').innerHTML = `<div class="hero-in sk-hero" aria-hidden="true">${sk('38%', 11)}${sk('64%', 30, 'margin-top:14px;border-radius:10px')}${sk('100%', 32, 'margin-top:14px;border-radius:6px')}
       <div class="sk-stats">${Array.from({ length: 4 }, () => `<div>${sk('60%', 9)}${sk('78%', 17, 'margin-top:8px')}</div>`).join('')}</div></div>`;

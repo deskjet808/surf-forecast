@@ -22,6 +22,24 @@ window.DAWNIE_GUIDES = {
     ],
     "camNote": "Swellnet First Point and Noosa Heads are marked free on Swellnet. Surfline cams play free with ads; ad-free and rewind are Premium."
   },
+  "boiling-pot": {
+    "paddle": "Get in from the rocks below the National Park boardwalk on a small day, timing it between sets, or paddle across from First Point when it's tiny.",
+    "hazards": "Rocks and boulders right along the inside, a rock entry and exit, and sweep towards First Point when there's swell.",
+    "crowd": "Smaller pack than First Point but plenty of good surfers; give way and don't paddle up the inside.",
+    "access": "National Park carpark at the end of Park Rd (fills early) or the boardwalk from Hastings St; toilets at the carpark.",
+    "tip": "Only on small, clean days. Watch a few sets from the boardwalk first and learn where people get in and out.",
+    "cams": [
+      {
+        "name": "Swellnet · Noosa Heads",
+        "url": "https://www.swellnet.com/surfcams/australia/queensland/noosa-heads"
+      },
+      {
+        "name": "Surfline · Boiling Pot",
+        "url": "https://www.surfline.com/surf-report/boiling-pot/640b8f988284fe13a8ae53eb"
+      }
+    ],
+    "camNote": "Swellnet Noosa Heads is marked free. Surfline cams play free with ads; ad-free and rewind are Premium."
+  },
   "nationals": {
     "paddle": "Paddle out from near the National Park carpark end of the boardwalk; watch where locals enter and time it between sets.",
     "hazards": "Rocky shoreline and boulders at the entry and exit, plus sweep along the point when there is swell.",

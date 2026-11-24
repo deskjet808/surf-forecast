@@ -128,6 +128,12 @@ window.DAWNIE = {
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: 'The longboard mecca. Sand-bottom right that needs E–NE swell to wrap the headland. Glassy in SE–S winds; NE wind blows it out.' },
 
+    { id: 'boiling-pot', name: 'Boiling Pot', short: 'Boiling Pot', region: 'sc', type: 'point',
+      lat: -26.38055, lon: 153.09805, faces: 350, offshore: 175,
+      swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.58, tide: 'mid',
+      buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      note: 'Rocky little point between First Point and Nationals. Needs E–NE swell to wrap; clean in SE–S winds. Rocks close in: a small-day wave for a learner.' },
+
     { id: 'nationals', name: 'National Park', short: 'Nationals', region: 'sc', type: 'point',
       lat: -26.37890, lon: 153.10040, faces: 340, offshore: 170,
       swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.62, tide: 'lowmid',
