@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://deskjet808.github.io/surf-forecast/icons/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Cowabunga — a Go verdict and a morning of rated surf bars">
+<meta property="og:image:alt" content="Cowabunga — a shaka against a sunset sea">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Cowabunga">
 <meta name="twitter:description" content="Go, maybe or skip? Longboard dawn-patrol forecast for the Sunshine Coast and Gold Coast.">
@@ -40,15 +40,15 @@
   /* Launch splash: inline so it paints before styles.css / JS. app.js adds .is-out once the lineup renders. */
   html { background: #06090c; }
   .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #06090c; transition: opacity .42s cubic-bezier(.2, .8, .2, 1), visibility 0s .42s; }
-  .splash svg { width: 64px; height: 64px; color: #c8f560; animation: splash-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+  .splash img { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 14px 40px rgba(200, 72, 122, .28), 0 0 0 1px rgba(255, 255, 255, .06); animation: splash-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
   .splash.is-out { opacity: 0; visibility: hidden; pointer-events: none; }
-  .splash.is-out svg { transform: scale(1.08); transition: transform .42s cubic-bezier(.2, .8, .2, 1); }
+  .splash.is-out img { transform: scale(1.08); transition: transform .42s cubic-bezier(.2, .8, .2, 1); }
   @keyframes splash-rise { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .splash, .splash svg { animation: none; transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .splash, .splash img { animation: none; transition: none; } }
 </style>
 </head>
 <body>
-<div class="splash" id="splash" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg></div>
+<div class="splash" id="splash" aria-hidden="true"><img src="icons/icon-192.png" alt="" width="88" height="88"></div>
 <script>setTimeout(function () { var s = document.getElementById('splash'); if (s) s.classList.add('is-out'); }, 4000);</script>
 <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" class="ptr-track"/><circle cx="12" cy="12" r="8" class="ptr-arc" pathLength="100"/></svg></div>
 <label class="haptic" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
@@ -58,7 +58,7 @@
 <main id="home" class="view">
   <header class="top">
     <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg>
+      <img class="brand-mark" src="icons/icon-192.png" alt="" width="36" height="36">
       <div>
         <h1>Cowabunga</h1>
         <p class="sub" id="updated">Loading the lineup…</p>
@@ -125,7 +125,7 @@
     <h2 class="foot-label">Data</h2>
     <ul id="sources" class="sources" aria-live="polite"></ul>
     <p class="fine">Forecast is a model, not a promise — always check it with your own eyes. Tides are Maritime Safety Queensland predictions (metres above lowest astronomical tide). Buoy heights are significant wave height (Hs). All times Brisbane (AEST).</p>
-    <p class="sig"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 22C8 22 9 10 14 10s7 12 11 12 3-4 4-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="14" cy="10" r="2.6" fill="var(--bg, #06090c)" stroke="currentColor" stroke-width="1.8"/></svg>Cowabunga · for the dawn patrol</p>
+    <p class="sig"><img src="icons/icon-192.png" alt="" width="18" height="18">Cowabunga · for the dawn patrol</p>
   </footer>
 </main>
 

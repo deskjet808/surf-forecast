@@ -1,7 +1,7 @@
 // Cowabunga service worker: caches the app shell so it opens instantly and offline.
 // Forecast data is cached by the app itself (localStorage), so API calls pass through.
-const CACHE = 'dawnie-v17';
-const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'guides.js', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png'];
+const CACHE = 'dawnie-v18';
+const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'guides.js', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 const NET_TIMEOUT = 3000; // weak beach signal: fall back to the cached shell after 3 s
 
 self.addEventListener('install', (e) => {
