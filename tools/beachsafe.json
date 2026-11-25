@@ -1,0 +1,353 @@
+{
+ "first-point": {
+  "slug": "noosa",
+  "title": "Noosa",
+  "locked": true
+ },
+ "boiling-pot": {
+  "slug": "little-cove",
+  "title": "Little Cove",
+  "metres": 513,
+  "locked": true
+ },
+ "nationals": {
+  "slug": "tea-tree-2",
+  "title": "Tea Tree Bay",
+  "metres": 436,
+  "locked": true
+ },
+ "tea-tree": {
+  "slug": "tea-tree-2",
+  "title": "Tea Tree Bay",
+  "metres": 275,
+  "locked": true
+ },
+ "alex": {
+  "slug": "alexandra-headland",
+  "title": "Alexandra Headland",
+  "metres": 504,
+  "locked": true
+ },
+ "moffat": {
+  "slug": "moffat",
+  "title": "Moffat",
+  "metres": 567,
+  "locked": true
+ },
+ "kings": {
+  "slug": "kings-caloundra",
+  "title": "Kings (Caloundra)",
+  "metres": 125,
+  "locked": true
+ },
+ "happys": {
+  "slug": "happy-valley-2",
+  "title": "Happy Valley - Caloundra",
+  "metres": 342,
+  "locked": true
+ },
+ "noosa-bar": {
+  "slug": "noosa-west",
+  "title": "Noosa West",
+  "metres": 407,
+  "locked": true
+ },
+ "noosa-main": {
+  "slug": "noosa",
+  "title": "Noosa",
+  "metres": 250,
+  "locked": true
+ },
+ "granite-bay": {
+  "slug": "granite-bay",
+  "title": "Granite Bay",
+  "metres": 223,
+  "locked": true
+ },
+ "alexandria-bay": {
+  "slug": "alexandria-bay",
+  "title": "Alexandria Bay- Noosa",
+  "metres": 199,
+  "locked": true
+ },
+ "sunshine-beach": {
+  "slug": "sunshine",
+  "title": "Sunshine Beach",
+  "metres": 178,
+  "locked": true
+ },
+ "peregian": {
+  "slug": "peregian",
+  "title": "Peregian",
+  "metres": 1453,
+  "locked": true
+ },
+ "point-arkwright": {
+  "slug": "yaroomba",
+  "title": "Yaroomba",
+  "metres": 661,
+  "locked": true
+ },
+ "yaroomba": {
+  "slug": "yaroomba",
+  "title": "Yaroomba",
+  "metres": 265,
+  "locked": true
+ },
+ "coolum": {
+  "slug": "coolum-north",
+  "title": "Coolum North",
+  "metres": 407,
+  "locked": true
+ },
+ "marcoola": {
+  "slug": "marcoola",
+  "title": "Marcoola",
+  "locked": true
+ },
+ "pincushion": {
+  "slug": "maroochydore",
+  "title": "Maroochydore",
+  "metres": 637,
+  "locked": true
+ },
+ "maroochydore": {
+  "slug": "maroochydore",
+  "title": "Maroochydore",
+  "metres": 868,
+  "locked": true
+ },
+ "the-bluff": {
+  "slug": "alexandra-head",
+  "title": "Alexandra Head",
+  "metres": 593,
+  "locked": true
+ },
+ "mooloolaba": {
+  "slug": "mooloolaba-main",
+  "title": "Mooloolaba- Main",
+  "metres": 287,
+  "locked": true
+ },
+ "point-cartwright": {
+  "slug": "point-cartwright-2",
+  "title": "Point Cartwright",
+  "metres": 405,
+  "locked": true
+ },
+ "kawana": {
+  "slug": "point-cartwright-2",
+  "title": "Point Cartwright",
+  "metres": 827,
+  "locked": true
+ },
+ "warana": {
+  "slug": "kawana-waters",
+  "title": "Kawana Waters",
+  "metres": 573,
+  "locked": true
+ },
+ "long-track": {
+  "slug": "currimundi",
+  "title": "Currimundi",
+  "metres": 1244,
+  "locked": true
+ },
+ "wurtulla": {
+  "slug": "currimundi",
+  "title": "Currimundi",
+  "metres": 864,
+  "locked": true
+ },
+ "ann-street": {
+  "slug": "dicky",
+  "title": "Dicky",
+  "metres": 534,
+  "locked": true
+ },
+ "dicky": {
+  "slug": "dicky",
+  "title": "Dicky",
+  "metres": 277,
+  "locked": true
+ },
+ "shellys": {
+  "slug": "shelly-beach",
+  "title": "Shelly Beach",
+  "metres": 365,
+  "locked": true
+ },
+ "wickham-point": {
+  "slug": "shelly-beach",
+  "title": "Shelly Beach",
+  "metres": 728,
+  "locked": true
+ },
+ "caloundra-bar": {
+  "slug": "happy-valley-2",
+  "title": "Happy Valley - Caloundra",
+  "metres": 288,
+  "locked": true
+ },
+ "currumbin": {
+  "slug": "currumbin-inlet",
+  "title": "Currumbin Inlet",
+  "metres": 388,
+  "locked": true
+ },
+ "rainbow": {
+  "slug": "rainbow-bay",
+  "title": "Rainbow Bay",
+  "metres": 159,
+  "locked": true
+ },
+ "kirra": {
+  "slug": "kirra",
+  "title": "Kirra",
+  "locked": true
+ },
+ "burleigh": {
+  "slug": "burleigh-heads",
+  "title": "Burleigh Heads",
+  "locked": true
+ },
+ "narrowneck": {
+  "slug": "southport",
+  "title": "Southport",
+  "metres": 1371,
+  "locked": true
+ },
+ "duranbah": {
+  "slug": "flagstaff-duranbah",
+  "title": "FLAGSTAFF/DURANBAH",
+  "metres": 11,
+  "locked": true
+ },
+ "kingscliff": {
+  "slug": "kingscliff-cudgen",
+  "title": "Kingscliff/Cudgen",
+  "metres": 359,
+  "locked": true
+ },
+ "cabarita": {
+  "slug": "norries-head",
+  "title": "NORRIES HEAD",
+  "metres": 190,
+  "locked": true
+ },
+ "hastings-point": {
+  "slug": "hastings-point-inlet",
+  "title": "HASTINGS POINT INLET",
+  "metres": 323,
+  "locked": true
+ },
+ "the-pass": {
+  "slug": "the-pass",
+  "title": "THE PASS",
+  "metres": 136,
+  "locked": true
+ },
+ "wategos": {
+  "slug": "wategos",
+  "title": "WATEGOS",
+  "metres": 223,
+  "locked": true
+ },
+ "byron-main": {
+  "slug": "main-byron-bay",
+  "title": "MAIN (BYRON BAY)",
+  "metres": 97,
+  "locked": true
+ },
+ "broken-head": {
+  "slug": "broken-head-2",
+  "title": "BROKEN HEAD",
+  "locked": true
+ },
+ "seven-mile": {
+  "slug": "seven-mile-lennox-head",
+  "title": "SEVEN MILE/LENNOX HEAD",
+  "metres": 1407,
+  "locked": true
+ },
+ "ballina-lighthouse": {
+  "slug": "ballina-head",
+  "title": "Ballina Head",
+  "metres": 240,
+  "locked": true
+ },
+ "shelly-ballina": {
+  "slug": "shelly-21",
+  "title": "SHELLY",
+  "metres": 213,
+  "locked": true
+ },
+ "manly": {
+  "slug": "manly",
+  "title": "MANLY",
+  "metres": 181,
+  "locked": true
+ },
+ "collaroy": {
+  "slug": "collaroy",
+  "title": "COLLAROY",
+  "metres": 323,
+  "locked": true
+ },
+ "bondi": {
+  "slug": "bondi-beach",
+  "title": "Bondi Beach",
+  "metres": 144,
+  "locked": true
+ },
+ "tamarama": {
+  "slug": "tamarama",
+  "title": "TAMARAMA",
+  "metres": 38,
+  "locked": true
+ },
+ "bronte": {
+  "slug": "bronte",
+  "title": "BRONTE",
+  "metres": 59,
+  "locked": true
+ },
+ "clovelly": {
+  "slug": "clovelly",
+  "title": "CLOVELLY",
+  "locked": true
+ },
+ "coogee": {
+  "slug": "coogee",
+  "title": "COOGEE",
+  "metres": 28,
+  "locked": true
+ },
+ "maroubra": {
+  "slug": "maroubra-beach",
+  "title": "Maroubra Beach",
+  "metres": 86,
+  "locked": true
+ },
+ "malabar": {
+  "slug": "malabar-long-bay",
+  "title": "MALABAR/LONG BAY",
+  "metres": 51,
+  "locked": true
+ },
+ "mudjimba": {
+  "slug": "mudjimba",
+  "title": "Mudjimba",
+  "locked": true
+ },
+ "lennox": {
+  "slug": "seven-mile-lennox-head",
+  "title": "SEVEN MILE/LENNOX HEAD",
+  "locked": true
+ },
+ "clarkes": {
+  "slug": "main-byron-bay",
+  "title": "MAIN (BYRON BAY)",
+  "locked": true
+ }
+}

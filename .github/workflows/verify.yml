@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: verify
+  group: data
   cancel-in-progress: false
 
 jobs:

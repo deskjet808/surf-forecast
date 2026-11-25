@@ -126,6 +126,7 @@ window.DAWNIE = {
       lat: -26.38420, lon: 153.09430, faces: 355, offshore: 180,
       swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.55, tide: 'all',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Long, soft right that peels for ages",
       note: 'The longboard mecca. Sand-bottom right that needs E–NE swell to wrap the headland. Glassy in SE–S winds; NE wind blows it out.' },
 
     { id: 'boiling-pot', name: 'Boiling Pot', short: 'Boiling Pot', region: 'sc', type: 'point',
@@ -138,24 +139,28 @@ window.DAWNIE = {
       lat: -26.37890, lon: 153.10040, faces: 340, offshore: 170,
       swell: { ideal: 80, spread: 40 }, wrap: 0.7, sizeFactor: 0.62, tide: 'lowmid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Long walls when the swell lines up",
       note: 'Most consistent of the inner points, from Boiling Pot towards Little Cove. Holds more swell than First Point; sheltered in SE winds.' },
 
     { id: 'tea-tree', name: 'Tea Tree Bay', short: 'Tea Tree', region: 'sc', type: 'point',
       lat: -26.37800, lon: 153.10690, faces: 330, offshore: 160,
       swell: { ideal: 75, spread: 40 }, wrap: 0.7, sizeFactor: 0.6, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Gentle, peeling right in a sheltered bay",
       note: 'Long, gentle right over rock and sand into the bay. Needs E–NE swell, protected from SE winds. Busy with loggers when on.' },
 
     { id: 'alex', name: 'Alexandra Headland', short: 'Alex', region: 'sc', type: 'point',
       lat: -26.67150, lon: 153.11250, faces: 45, offshore: 225,
       swell: { ideal: 120, spread: 50 }, wrap: 0.3, sizeFactor: 0.85, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Mellow right point on small swells",
       note: 'Right off the bluff into Alex beach plus beach peaks. Likes SE groundswell; SE wind is cross-shore, so go early or in S–SW winds.' },
 
     { id: 'moffat', name: 'Moffat Beach', short: 'Moffat', region: 'sc', type: 'point',
       lat: -26.79010, lon: 153.14670, faces: 55, offshore: 235,
       swell: { ideal: 105, spread: 50 }, wrap: 0.3, sizeFactor: 0.85, tide: 'all',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
+      log: "Soft rights off the point",
       note: 'Soft, peeling rights over a sloping rock shelf — a logger favourite. E or wrapping SE swell; some shelter in S–SE winds.' },
 
     { id: 'kings', name: 'Kings Beach', short: 'Kings', region: 'sc', type: 'beach',
@@ -193,6 +198,7 @@ window.DAWNIE = {
       lat: -26.38529, lon: 153.09022, faces: 5, offshore: 185,
       swell: { ideal: 75, spread: 40 }, sizeFactor: 0.4, tide: 'all',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Soft, forgiving and patrolled",
       note: "Sheltered north-facing beach below Hastings St. Gentle and patrolled: the easiest wave in Noosa when the points are small." },
 
     { id: 'granite-bay', name: 'Granite Bay', short: 'Granite Bay', region: 'sc', type: 'point',
@@ -289,6 +295,7 @@ window.DAWNIE = {
       lat: -26.67869, lon: 153.12223, faces: 10, offshore: 190,
       swell: { ideal: 100, spread: 45 }, sizeFactor: 0.4, tide: 'all',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
+      log: "Gentle, sheltered rollers in a big swell",
       note: "North-facing bay behind Point Cartwright. Only breaks in big E\u2013SE swell; then a gentle, sheltered learner wave." },
 
     { id: 'point-cartwright', name: 'Point Cartwright', short: 'Cartwright', region: 'sc', type: 'reef',
@@ -356,12 +363,14 @@ window.DAWNIE = {
       lat: -28.12450, lon: 153.48720, faces: 40, offshore: 220,
       swell: { ideal: 110, spread: 45 }, wrap: 0.15, sizeFactor: 0.75, tide: 'lowmid',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
+      log: "Long, rolling right off the alley",
       note: 'Gentle sand-bottom right off Currumbin Rock into the creek mouth. Sheltered from SE — the go-to small-wave log spot. Strong rip on the run-out.' },
 
     { id: 'rainbow', name: 'Rainbow Bay', short: 'Rainbow', region: 'gc', type: 'point',
       lat: -28.16300, lon: 153.54760, faces: 345, offshore: 180,
       swell: { ideal: 115, spread: 45 }, wrap: 0.2, sizeFactor: 0.7, tide: 'all',
       buoy: 'Palm Beach Mk4', tidePort: 'goldcoast',
+      log: "Lined-up right: a classic log wave",
       note: 'The softer inside of the Superbank below Snapper. E–SE swell wraps in; stays clean in SE–S winds.' },
 
     { id: 'kirra', name: 'Kirra', short: 'Kirra', region: 'gc', type: 'point',
@@ -381,6 +390,149 @@ window.DAWNIE = {
       swell: { ideal: 100, spread: 60 }, sizeFactor: 0.9, tide: 'mid',
       buoy: 'Gold Coast Mk4', tidePort: 'goldcoast',
       note: 'Open beach with peaks shaped by the artificial reef. Picks up most swell but only clean in W winds — early mornings.' },
+    // ---------------- Northern NSW ---------------- (tides: modelled sea level; no MSQ table in NSW)
+    { id: 'duranbah', name: "Duranbah", short: "D-Bah", region: 'nnsw', type: 'beach',
+      lat: -28.16708, lon: 153.55169, faces: 70, offshore: 250,
+      swell: { ideal: 110, spread: 55 }, sizeFactor: 1.0, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Punchy beach between the Tweed wall and Point Danger. Picks up every swell; crowded and fast, more shortboard than log." },
+
+    { id: 'kingscliff', name: "Kingscliff", short: "Kingscliff", region: 'nnsw', type: 'beach',
+      lat: -28.25300, lon: 153.57900, faces: 95, offshore: 275,
+      swell: { ideal: 105, spread: 55 }, sizeFactor: 0.85, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Open beach with rock walls holding the sand. Friendly banks on small days; clean in W winds." },
+
+    { id: 'cabarita', name: "Cabarita (Norries)", short: "Cabarita", region: 'nnsw', type: 'point',
+      lat: -28.33445, lon: 153.57739, faces: 40, offshore: 220,
+      swell: { ideal: 120, spread: 45 }, wrap: 0.3, sizeFactor: 0.8, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Soft right off Norries on small days",
+      note: "Right-hand point in the lee of Norries Head. Sheltered in SE winds; soft and long on small swells." },
+
+    { id: 'hastings-point', name: "Hastings Point", short: "Hastings", region: 'nnsw', type: 'point',
+      lat: -28.36000, lon: 153.58100, faces: 35, offshore: 215,
+      swell: { ideal: 115, spread: 45 }, wrap: 0.4, sizeFactor: 0.75, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Mellow right point, a log favourite",
+      note: "Small rocky point by the creek mouth. Mellow right in SE swell and S winds; watch the creek current." },
+
+    { id: 'the-pass', name: "The Pass", short: "The Pass", region: 'nnsw', type: 'point',
+      lat: -28.63682, lon: 153.62756, faces: 10, offshore: 190,
+      swell: { ideal: 120, spread: 45 }, wrap: 0.5, sizeFactor: 0.65, tide: 'all',
+      buoy: null, tidePort: null,
+      log: "Iconic long right; logs rule here",
+      note: "Byron’s famous right point under Cape Byron. Long, peeling walls in SE swell; very crowded, strict etiquette." },
+
+    { id: 'wategos', name: "Wategos", short: "Wategos", region: 'nnsw', type: 'point',
+      lat: -28.63438, lon: 153.63419, faces: 0, offshore: 180,
+      swell: { ideal: 110, spread: 40 }, wrap: 0.6, sizeFactor: 0.55, tide: 'all',
+      buoy: null, tidePort: null,
+      log: "Slow, peeling right made for logs",
+      note: "North-facing bay beside the Cape. Slow, gentle rights; the softest wave in Byron when there’s enough swell." },
+
+    { id: 'clarkes', name: "Clarkes Beach", short: "Clarkes", region: 'nnsw', type: 'beach',
+      lat: -28.63800, lon: 153.61900, faces: 15, offshore: 195,
+      swell: { ideal: 100, spread: 45 }, sizeFactor: 0.65, tide: 'all',
+      buoy: null, tidePort: null,
+      log: "Gentle peaks for learning on a log",
+      note: "Sheltered beach between Main Beach and The Pass. Gentle peaks that suit learning on a log." },
+
+    { id: 'byron-main', name: "Byron Main Beach", short: "Byron Main", region: 'nnsw', type: 'beach',
+      lat: -28.64108, lon: 153.61461, faces: 10, offshore: 190,
+      swell: { ideal: 95, spread: 45 }, sizeFactor: 0.6, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Patrolled town beach. Sheltered from SE winds; small and friendly most days." },
+
+    { id: 'broken-head', name: "Broken Head", short: "Broken Head", region: 'nnsw', type: 'point',
+      lat: -28.70582, lon: 153.61983, faces: 40, offshore: 220,
+      swell: { ideal: 110, spread: 45 }, wrap: 0.4, sizeFactor: 0.85, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Right-hand point in a nature reserve south of Byron. Clean in S\u2013SW winds; rocks at the top of the point." },
+
+    { id: 'lennox', name: "Lennox Point", short: "Lennox", region: 'nnsw', type: 'point',
+      lat: -28.80012, lon: 153.59755, faces: 40, offshore: 225,
+      swell: { ideal: 130, spread: 45 }, wrap: 0.3, maxSize: 1.0, sizeFactor: 0.95, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Long, powerful right over boulders. A world-class wave for experienced surfers: not a learner spot." },
+
+    { id: 'seven-mile', name: "Seven Mile Beach", short: "Seven Mile", region: 'nnsw', type: 'beach',
+      lat: -28.77100, lon: 153.60000, faces: 95, offshore: 275,
+      swell: { ideal: 100, spread: 55 }, sizeFactor: 0.95, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Long open beach north of Lennox. Plenty of peaks to yourself; best in light W winds." },
+
+    { id: 'ballina-lighthouse', name: "Lighthouse Beach (Ballina)", short: "Lighthouse", region: 'nnsw', type: 'beach',
+      lat: -28.86550, lon: 153.59150, faces: 95, offshore: 275,
+      swell: { ideal: 110, spread: 55 }, sizeFactor: 0.95, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Patrolled open beach south of the Ballina breakwall. Consistent banks; strong rips near the wall." },
+
+    { id: 'shelly-ballina', name: "Shelly Beach (Ballina)", short: "Shelly", region: 'nnsw', type: 'reef',
+      lat: -28.86100, lon: 153.59600, faces: 50, offshore: 230,
+      swell: { ideal: 110, spread: 50 }, sizeFactor: 0.8, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Small bay with rock shelves south of Lighthouse Beach. Best mid tide on small, clean days." },
+
+    // ---------------- Sydney (east) ---------------- (tides: modelled sea level; no MSQ table in NSW)
+    { id: 'manly', name: "Manly South Steyne", short: "Manly", region: 'syd', type: 'beach',
+      lat: -33.79700, lon: 151.29000, faces: 100, offshore: 280,
+      swell: { ideal: 110, spread: 50 }, sizeFactor: 0.75, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Sheltered corner; a longboard institution",
+      note: "Sheltered south corner of Manly. A longboard institution: gentle waves and protection from S winds." },
+
+    { id: 'collaroy', name: "Collaroy", short: "Collaroy", region: 'syd', type: 'beach',
+      lat: -33.73200, lon: 151.30500, faces: 80, offshore: 260,
+      swell: { ideal: 90, spread: 45 }, sizeFactor: 0.75, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Soft waves sheltered by Long Reef",
+      note: "Northern-beaches bay sheltered by Long Reef. Soft waves that suit logs and learners." },
+
+    { id: 'bondi', name: "Bondi Beach", short: "Bondi", region: 'syd', type: 'beach',
+      lat: -33.89216, lon: 151.27793, faces: 115, offshore: 295,
+      swell: { ideal: 135, spread: 55 }, sizeFactor: 0.85, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Gentle north end on small days",
+      note: "The famous one. The north end is gentle on small days; crowded, with a strong rip at the south end." },
+
+    { id: 'tamarama', name: "Tamarama", short: "Tamarama", region: 'syd', type: 'beach',
+      lat: -33.90090, lon: 151.27109, faces: 100, offshore: 280,
+      swell: { ideal: 115, spread: 45 }, maxSize: 1.0, sizeFactor: 0.95, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Tiny, punchy bay with rocks and strong rips. For experienced surfers only." },
+
+    { id: 'bronte', name: "Bronte", short: "Bronte", region: 'syd', type: 'beach',
+      lat: -33.90402, lon: 151.26901, faces: 95, offshore: 275,
+      swell: { ideal: 120, spread: 50 }, sizeFactor: 0.9, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Exposed beach with a notorious rip (the Bronte Express). Best on small days in W winds." },
+
+    { id: 'clovelly', name: "Clovelly Reef", short: "Clovelly", region: 'syd', type: 'reef',
+      lat: -33.91800, lon: 151.26300, faces: 90, offshore: 270,
+      swell: { ideal: 120, spread: 45 }, maxSize: 1.0, sizeFactor: 0.9, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Reef at the mouth of the Clovelly inlet. Shallow and rocky; experienced surfers only." },
+
+    { id: 'coogee', name: "Coogee", short: "Coogee", region: 'syd', type: 'beach',
+      lat: -33.92100, lon: 151.25800, faces: 90, offshore: 270,
+      swell: { ideal: 120, spread: 45 }, sizeFactor: 0.7, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Patrolled bay partly sheltered by Wedding Cake Island. Small and mellow most days." },
+
+    { id: 'maroubra', name: "Maroubra", short: "Maroubra", region: 'syd', type: 'beach',
+      lat: -33.94857, lon: 151.25722, faces: 100, offshore: 280,
+      swell: { ideal: 130, spread: 55 }, sizeFactor: 1.0, tide: 'mid',
+      buoy: null, tidePort: null,
+      note: "Sydney’s most consistent beach. Powerful and heavily localised; not a log wave." },
+
+    { id: 'malabar', name: "Malabar", short: "Malabar", region: 'syd', type: 'beach',
+      lat: -33.96390, lon: 151.25230, faces: 80, offshore: 260,
+      swell: { ideal: 110, spread: 45 }, sizeFactor: 0.65, tide: 'mid',
+      buoy: null, tidePort: null,
+      log: "Soft, sheltered bay waves",
+      note: "Long Bay’s sheltered beach. Soft, small waves that suit a longboard." },
+
   ],
 
   /* ===========================================================================
@@ -393,6 +545,9 @@ window.DAWNIE = {
     { site: 'Caloundra',      name: 'Caloundra',   region: 'sc', lat: -26.84746, lon: 153.15433 },
     { site: 'Gold Coast Mk4', name: 'Gold Coast',  region: 'gc', lat: -27.96573, lon: 153.44159 },
     { site: 'Palm Beach Mk4', name: 'Palm Beach',  region: 'gc', lat: -28.09977, lon: 153.48631 },
+    // Upstream: south swell reaches these first, so a jump here is an early warning ("Swell arriving").
+    { site: 'Brisbane Mk4',   name: 'Point Lookout',  region: 'sc', upstream: true, lead: '2–3 hours', lat: -27.48950, lon: 153.63329 },
+    { site: 'Tweed Offshore', name: 'Tweed Offshore', region: 'gc', upstream: true, lead: 'within the hour', also: ['nnsw'], lat: -28.21352, lon: 153.68170 },
   ],
   waveResourceId: '2bbef99e-9974-49b9-a316-57402b00609c',
 
@@ -438,9 +593,34 @@ window.DAWNIE = {
      6. MAPS — spot map tiles and the Windy embed
      =========================================================================== */
   maps: {
-    centre: { sc: [-26.60, 153.11, 10], gc: [-28.07, 153.47, 11] },   // lat, lon, zoom
-    windy:  { sc: [-26.6, 153.4, 7],    gc: [-28.0, 153.7, 7] },
+    centre: { sc: [-26.60, 153.11, 10], gc: [-28.07, 153.47, 11], nnsw: [-28.55, 153.58, 9], syd: [-33.86, 151.27, 11] },   // lat, lon, zoom
+    windy:  { sc: [-26.6, 153.4, 7],    gc: [-28.0, 153.7, 7],    nnsw: [-28.6, 153.9, 7],   syd: [-33.9, 151.6, 7] },
   },
+
+  /* ===========================================================================
+     AREAS — the region switch: state first, then area. `wind` is the BoM
+     station shown in "Wind now" on Today; spot pages use their nearest station.
+     =========================================================================== */
+  states: { qld: 'Queensland', nsw: 'New South Wales' },
+  areas: [
+    { id: 'sc',   state: 'qld', name: 'Sunshine Coast', wind: '94569' },
+    { id: 'gc',   state: 'qld', name: 'Gold Coast',     wind: '94592' },
+    { id: 'nnsw', state: 'nsw', name: 'Northern NSW',   wind: '94599' },
+    { id: 'syd',  state: 'nsw', name: 'Sydney',         wind: '95766' },
+  ],
+
+  /* BoM automatic weather stations for live wind (fetched every 30 min by
+     .github/workflows/live.yml into data/live.json; BoM blocks browser requests). */
+  windStations: [
+    { id: '94570', product: 'IDQ60801', name: 'Tewantin',               lat: -26.39, lon: 153.04 },
+    { id: '94569', product: 'IDQ60801', name: 'Marcoola airport',       lat: -26.60, lon: 153.09 },
+    { id: '94580', product: 'IDQ60801', name: 'Gold Coast Seaway',      lat: -27.94, lon: 153.43 },
+    { id: '94592', product: 'IDQ60801', name: 'Coolangatta',            lat: -28.17, lon: 153.50 },
+    { id: '94599', product: 'IDN60801', name: 'Cape Byron',             lat: -28.64, lon: 153.64 },
+    { id: '94596', product: 'IDN60801', name: 'Ballina',                lat: -28.84, lon: 153.56 },
+    { id: '95766', product: 'IDN60801', name: 'Sydney Harbour',         lat: -33.84, lon: 151.29 },
+    { id: '94767', product: 'IDN60801', name: 'Sydney Airport',         lat: -33.95, lon: 151.17 },
+  ],
 
   /* ===========================================================================
      7. UI

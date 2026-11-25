@@ -475,9 +475,9 @@
      STATE
      ================================================================ */
   let raw = null, model = null;
-  const status = { marine: 'pending', wind: 'pending', ext: 'pending', tides: 'pending', buoys: 'pending' };
+  const status = { marine: 'pending', wind: 'pending', ext: 'pending', tides: 'pending', buoys: 'pending', live: 'pending', safety: 'pending' };
   const ui = {
-    region: store.get('dawnie:region') || C.ui.defaultRegion,
+    region: C.areas.some((x) => x.id === store.get('dawnie:region')) ? store.get('dawnie:region') : C.ui.defaultRegion,
     day: 0,
     view: new URLSearchParams(location.search).get('view') || store.get('dawnie:view') || C.ui.detailView,
     windy: store.get('dawnie:windy') || 'waves',
@@ -487,6 +487,11 @@
     tableAll: false,
     tideDate: null,
   };
+
+  // Areas (the region switch): state first, then area. ui.region is the area id.
+  const areaOf = (id) => C.areas.find((x) => x.id === id) || C.areas[0];
+  const areaName = (id) => areaOf(id).name;
+  const inArea = (b, id) => b.region === id || (b.also || []).includes(id);
 
   // Network / refresh state, used by the subtitle, refresh button and source list.
   const net = { busy: false, failed: false, flash: 0 };
@@ -530,7 +535,7 @@
 
   async function load(force) {
     if (net.busy) return;
-    fetchTrack();
+    fetchTrack(); fetchLive(); fetchSafety();
     const started = Date.now();
     setBusy(true);
     const cached = savedData();
@@ -541,7 +546,7 @@
       catch (e) { console.warn('cache unusable', e); raw = null; model = null; } // old/corrupt cache → fetch fresh
     } else if (raw) cacheOk = true;
     if (fresh && !force && cacheOk) {
-      Object.keys(status).forEach((k) => (status[k] = raw[k] ? 'ok' : 'err'));
+      Object.keys(status).forEach((k) => { if (k !== 'live' && k !== 'safety') status[k] = raw[k] ? 'ok' : 'err'; });
       if (raw.tidesFallback) status.tides = 'warn';
       status.buoys = 'pending';
       setBusy(false);
@@ -646,9 +651,11 @@
   }
 
   function renderHome() {
-    const region = ui.region;
-    $('.region').dataset.active = region;
-    document.querySelectorAll('.region button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.region === region)));
+    const region = ui.region, area = areaOf(region);
+    $('.region').dataset.active = area.state;
+    document.querySelectorAll('.region button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.state === area.state)));
+    $('#area').innerHTML = C.areas.filter((x) => x.state === area.state).map((x) =>
+      `<button data-area="${x.id}" aria-pressed="${x.id === region}">${x.name} <small>${C.spots.filter((s) => s.region === x.id).length}</small></button>`).join('');
     renderUpdated();
     ensureBlock();
 
@@ -680,6 +687,8 @@
     const span = blockSpan(date, ui.block);
     $('#window-meta').textContent = `${blockOf(ui.block).name} ${minClock(span.m0)}–${minClock(span.m1)} · ${wd(date)} ${dm(date)}`;
 
+    renderArrive();
+    renderWindNow();
     renderHero(list[0], date);
     renderSummary(list, date);
 
@@ -714,6 +723,9 @@
     }).join('')}</div>`;
   }
 
+  // Longboard pick: the shaka goes everywhere the spot's name does.
+  const logMark = (s) => (s.log ? '<span class="shaka" role="img" aria-label="Longboard pick">🤙</span>' : '');
+
   // One Top 5 row: rank badge in the rating colour · spot + rating · surf · wind · best hour.
   function t5Row({ sp, m }, i) {
     const b = m.best, c = colour(b), fav = isFav(sp.spot.id);
@@ -721,7 +733,7 @@
     return `<li class="row t5-row${b.flag === 'flat' ? ' is-flat' : ''}${i === 5 ? ' t5-rest' : ''}" data-spot="${sp.spot.id}" style="--i:${i};--c:${c}"
         aria-label="${i + 1}. ${esc(sp.spot.name)}, ${label(b)}, ${f1(b.surf)} metres, wind ${windWord(b)} ${ws} km/h, best ${hourLbl(b.hour)}, ${confPct(confidence(m))}% confidence">
       <span class="t5-rank">${i + 1}</span>
-      <span class="name"><span class="nm">${esc(sp.spot.short)}</span>${fav ? '<svg class="t5-fav" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.5l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"/></svg>' : ''}<span class="t5-rate">${label(b)}</span></span>
+      <span class="name"><span class="nm">${esc(sp.spot.short)}</span>${logMark(sp.spot)}${fav ? '<svg class="t5-fav" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.5l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"/></svg>' : ''}<span class="t5-rate">${label(b)}</span></span>
       <span class="t5-surf"><span>${U(f1(b.surf), 'm')}</span><small>${Math.round(b.period)}${TS}s</small></span>
       <span class="t5-wind"><b style="color:${windCol(b.wI.cat)}">${windWord(b)}</b><small>${ws}${TS}km/h</small></span>
       <span class="t5-at"><b>${hourLbl(b.hour)}</b>${confDots(confidence(m))}</span>
@@ -842,8 +854,8 @@
     out.push(same ? `Wind <b>${windPhrase(w0)}</b> ${all}.`
       : `Wind <b>${windPhrase(w0)}</b> ${from}, ${windPhrase(w1)} by ${hourLbl(h1.hour)}.`);
     // tide
-    const turns = tideTurnsIn(s.tidePort, m.m0, m.m1);
-    if (turns.length) out.push(turns.map((e, i) => `${i ? '' : ''}${e.hi ? 'High' : 'Low'} tide ${clock(e.t)} (${e.h.toFixed(1)} m)`).join(', ') + '.');
+    const turns = tideTurns(top.sp).filter((e) => e.m >= m.m0 && e.m <= m.m1);
+    if (turns.length) out.push(turns.map((e) => (e.model ? `${e.hi ? 'High' : 'Low'} tide about ${clock(e.t)}` : `${e.hi ? 'High' : 'Low'} tide ${clock(e.t)} (${e.h.toFixed(1)} m)`)).join(', ') + '.');
     else if (h0.tide && h1.tide) out.push(`Tide ${tideWord(h0.tide).replace(' tide', '')} to ${tideWord(h1.tide)}.`);
     // verdict
     const goods = list.filter((x) => x.m.best.rating >= 3 && !x.m.best.flag).length;
@@ -874,7 +886,7 @@
     const { dates, ranks, conf } = regionRanks(ui.region);
     const tops = ranks.map((l) => l[0] || null);
     const trendAt = dates.findIndex(isTrend);
-    const regionName = ui.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast';
+    const regionName = areaName(ui.region);
 
     // days to watch: best mornings from tomorrow on that reach the bar
     const cand = tops.map((t, i) => ({ t, i })).filter(({ t, i }) => i > 0 && t && !t.m.best.flag && t.m.best.rating >= C.outlook.watchMin);
@@ -887,7 +899,7 @@
         return `<button class="watch${isTrend(d) ? ' trend' : ''}" data-goday="${i}" style="--c:${colour(b)}">
           <span class="w-day">${dayShort(d)} <span>${dm(d)}</span></span>
           <span class="w-rate">${label(b)}</span>
-          <span class="w-spot">${esc(t.sp.spot.short)} · ${hourLbl(b.hour)}</span>
+          <span class="w-spot">${esc(t.sp.spot.short)}${logMark(t.sp.spot)} · ${hourLbl(b.hour)}</span>
           <span class="w-why">${f1(b.surf)} m ${cmp(b.main ? b.main.d : b.sw.d)} ${Math.round(b.period)} s, ${windPhrase(b.wind)}</span>
           <span class="w-conf">${confDots(conf[i])}<span>${conf[i].word}</span></span>
         </button>`;
@@ -916,7 +928,7 @@
           return `${divider}<li class="o-row${isTrend(d) ? ' trend' : ''}${i === ui.day ? ' sel' : ''}" data-goday="${i}" style="--c:${colour(b)}">
             <span class="o-day"><b>${dayShort(d)}</b><span>${dm(d)}</span></span>
             <span class="o-main">
-              <span class="o-top"><span class="o-rate">${label(b)}</span><span class="o-spot">${esc(t.sp.spot.short)} · ${hourLbl(b.hour)}</span></span>
+              <span class="o-top"><span class="o-rate">${label(b)}</span><span class="o-spot">${esc(t.sp.spot.short)}${logMark(t.sp.spot)} · ${hourLbl(b.hour)}</span></span>
               <span class="o-why">${f1(b.surf)} m ${cmp(b.main ? b.main.d : b.sw.d)} @ ${Math.round(b.period)} s · ${b.wI.cat === 'glassy' ? 'glassy' : windPhrase(b.wind) + ' ' + ({ offshore: 'off', onshore: 'on', cross: 'cross' }[b.wI.cat])}</span>
             </span>
             ${conf[i] ? confDots(conf[i]) : ''}
@@ -1016,7 +1028,7 @@
       const b = m.best, s = sp.spot;
       const icon = L.divIcon({
         className: 'pin-wrap', iconSize: [0, 0],
-        html: `<span class="pin" style="--c:${colour(b)}"><i></i><span class="pin-l"><b>${esc(s.short)}</b>${label(b)}</span></span>`,
+        html: `<span class="pin" style="--c:${colour(b)}"><i></i><span class="pin-l"><b>${esc(s.short)}${s.log ? ' 🤙' : ''}</b>${label(b)}</span></span>`,
       });
       const mk = L.marker([s.lat, s.lon], { icon, keyboard: false, zIndexOffset: 100 - k, title: `${s.name}: ${label(b)}` }).addTo(lmap);
       mk.on('click', () => { homeScroll = window.scrollY; cameFromHome = true; location.hash = `#/spot/${s.id}`; });
@@ -1099,7 +1111,7 @@
     const el = $('#tideplan');
     if (!el) return;
     const s = sp.spot, date = ui.tideDate || nowStr().slice(0, 10);
-    const port = C.tides[s.tidePort];
+    const port = s.tidePort ? C.tides[s.tidePort] : null;
     const head = `<div class="tp-bar">
         <button class="icon-btn sm" data-tide-step="-1" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <label class="tp-date"><span class="tp-d1">${dayName(date) === wd(date) ? LONGDAY[wd(date)] : dayName(date)}</span><span class="tp-d2">${dm(date)}/${date.slice(0, 4)}</span>
@@ -1108,7 +1120,10 @@
       </div>`;
     el.innerHTML = head + '<div class="tp-body"><div class="skel" style="height:120px"></div></div>';
     let res;
-    try { res = await tidesForDay(s.tidePort, date); } catch {
+    if (!port) { // NSW: no MSQ table, so turns come from the modelled sea level (forecast range only)
+      const lo = toMin(addDays(date, -1)), hi = toMin(addDays(date, 2));
+      res = { list: tideTurns(sp).filter((e) => e.m >= lo && e.m <= hi), model: true };
+    } else try { res = await tidesForDay(s.tidePort, date); } catch {
       if ((ui.tideDate || nowStr().slice(0, 10)) !== date) return;
       $('.tp-body', el).innerHTML = '<p class="tp-msg">Couldn’t reach the MSQ tide tables. Check your connection.</p>';
       return;
@@ -1117,7 +1132,7 @@
     const list = res.list;
     const day0 = toMin(date), day1 = day0 + 1440;
     if (list.filter((e) => e.m >= day0 && e.m < day1).length < 2) {
-      $('.tp-body', el).innerHTML = `<p class="tp-msg">${res.missing ? `MSQ hasn’t published ${date.slice(0, 4)} tide tables for ${esc(port.name)} yet.` : 'No tide predictions for this date.'}</p>`;
+      $('.tp-body', el).innerHTML = `<p class="tp-msg">${res.model ? 'The modelled tide only covers the forecast days.' : res.missing ? `MSQ hasn’t published ${date.slice(0, 4)} tide tables for ${esc(port.name)} yet.` : 'No tide predictions for this date.'}</p>`;
       return;
     }
     const sun = sunFor(date, s.lat, s.lon);
@@ -1150,7 +1165,7 @@
     $('.tp-body', el).innerHTML = `<svg class="tp-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tide curve for ${dm(date)}">${svg}</svg>
       <ul class="tp-list">${todays.map((e) => `<li class="${e.hi ? 'hi' : 'lo'}">${tideIcon(e.hi)}<span>${e.hi ? 'High' : 'Low'}</span><b>${clock(e.t)}</b><em>${e.h.toFixed(2)} m</em></li>`).join('')}
         <li class="sun">${sunIcon(false)}<span>Sunrise</span><b>${clock(sun.rise)}</b><em></em></li><li class="sun">${sunIcon(true)}<span>Sunset</span><b>${clock(sun.set)}</b><em></em></li></ul>
-      <p class="tp-src">${esc(port.name)} predictions, metres above lowest astronomical tide.</p>`;
+      <p class="tp-src">${res.model ? 'Modelled from Open-Meteo sea level (no official NSW table here): metres relative to mean sea level, turn times ±30 min.' : `${esc(port.name)} predictions, metres above lowest astronomical tide.`}</p>`;
   }
 
   /* ---------------- Spot guide + cams (spot page) ---------------- */
@@ -1212,7 +1227,13 @@
     const el = $('#buoys');
     if (!model) return;
     renderTrack();
-    const list = C.buoys.map((b, i) => ({ b, i })).filter(({ b }) => b.region === ui.region);
+    const list = C.buoys.map((b, i) => ({ b, i })).filter(({ b }) => inArea(b, ui.region))
+      .sort((x, y) => (x.b.upstream && x.b.region === ui.region) - (y.b.upstream && y.b.region === ui.region));
+    const up = (b) => (b.upstream && b.region === ui.region ? '<span class="buoy-up">Upstream</span>' : '');
+    $('#buoy-note').textContent = { sc: 'No Noosa buoy is in the live feed: Mooloolaba is the closest. Point Lookout is upstream, so south swell shows there first.',
+      gc: 'Tweed Offshore sits upstream of the Gold Coast, so south swell shows there first.',
+      nnsw: 'There’s no open buoy feed for Byron yet: Tweed Offshore is the nearest one with public data.' }[ui.region] || '';
+    el.closest('section').hidden = !list.length; // Sydney: no open buoy feed, so no Buoy check at all
     const obsAll = (raw && raw.buoys) || {};
     const nowM = toMin(nowStr());
     el.innerHTML = list.map(({ b, i }) => {
@@ -1221,7 +1242,7 @@
         if (status.buoys === 'pending') return buoySkel();
         const down = status.buoys === 'err';
         return `<article class="buoy is-empty">
-          <div class="buoy-head"><h3>${esc(b.name)}</h3><span class="age is-${down ? 'err' : 'warn'}"><i></i>${down ? 'Feed unreachable' : 'No recent reading'}</span></div>
+          <div class="buoy-head"><h3>${esc(b.name)}${up(b)}</h3><span class="age is-${down ? 'err' : 'warn'}"><i></i>${down ? 'Feed unreachable' : 'No recent reading'}</span></div>
           <p class="buoy-empty">${down ? "The Queensland wave buoy feed didn't answer. Tap refresh to try again." : "This buoy hasn't reported in the last 24 hours. It may be offline for maintenance."}</p>
         </article>`;
       }
@@ -1242,7 +1263,7 @@
       const sst = sstRow ? sstRow.sst : null;
       const stat = (k, v, m) => `<div><dt>${k}</dt><dd>${v}</dd><dd class="m">${m}</dd></div>`;
       return `<article class="buoy">
-        <div class="buoy-head"><h3>${esc(b.name)}</h3><span class="age is-${ageCls}" title="Latest reading ${whenStr(last.t)}"><i></i>${clockExact(last.t)} · <span class="age-ago${ageWarn ? ' is-old' : ''}">${agoStr(ageMin)}</span></span></div>
+        <div class="buoy-head"><h3>${esc(b.name)}${up(b)}</h3><span class="age is-${ageCls}" title="Latest reading ${whenStr(last.t)}"><i></i>${clockExact(last.t)} · <span class="age-ago${ageWarn ? ' is-old' : ''}">${agoStr(ageMin)}</span></span></div>
         <div class="buoy-main">
           <div class="buoy-now">
             <div class="buoy-big">${U(last.hs.toFixed(2), 'm')}</div>
@@ -1258,7 +1279,149 @@
         </dl>
         ${sparkline(obs, fc, b.site)}
       </article>`;
-    }).join('') + (ui.region === 'sc' ? '<p class="buoy-note">No Noosa buoy is in the live feed — Mooloolaba is the closest.</p>' : '');
+    }).join('');
+  }
+
+  /* ---------------- Wind now (BoM, via data/live.json) ---------------- */
+  // .github/workflows/live.yml saves BoM's latest readings every 30 minutes (BoM blocks browser requests).
+  let live = store.get('dawnie:live') || null, liveAt = 0;
+  const DEG = Object.fromEntries(COMPASS.map((c, i) => [c, i * 22.5]));
+  async function fetchLive() {
+    liveAt = Date.now();
+    try { live = await getJSON(`data/live.json?t=${Date.now()}`); store.set('dawnie:live', live); status.live = 'ok'; }
+    catch (e) { status.live = live ? 'warn' : 'err'; console.warn('live wind', e); }
+    if (!model) return;
+    renderWindNow(); renderSources();
+    const sp = curSpot(), el = $('#spot-wind');
+    if (sp && el) el.innerHTML = spotWindHtml(sp.spot);
+  }
+  const liveLatest = () => Object.values((live && live.wind) || {}).map((s) => s.obs[0] && s.obs[0].t).sort().pop() || '';
+  const nearestStation = (s) => C.windStations.reduce((b, x) => (Math.hypot(x.lat - s.lat, x.lon - s.lon) < Math.hypot(b.lat - s.lat, b.lon - s.lon) ? x : b));
+  function stationNow(id) {
+    const st = live && live.wind && live.wind[id], o = st && st.obs[0];
+    if (!o) return null;
+    const age = toMin(nowStr()) - toMin(o.t);
+    if (age > 180) return null; // too old to call "now"
+    const d = o.deg != null ? o.deg : DEG[o.dir];
+    return { name: st.name, t: o.t, age, kmh: o.kmh, gust: o.gust, d, calm: !o.kmh || o.dir === 'CALM' || d == null };
+  }
+  // What the wind means at a set of spots: one plain line and a colour.
+  function windRead(now, spots) {
+    if (now.calm || now.kmh < R.wind.glassy) return { cat: 'glassy', text: spots.length > 1 ? 'calm, glassy everywhere' : 'calm, glassy here' };
+    const cats = spots.map((s) => windInfo(s, { s: now.kmh, d: now.d, g: now.gust }).cat);
+    const n = (k) => cats.filter((c) => c === k).length;
+    const top = ['offshore', 'cross', 'onshore'].sort((x, y) => n(y) - n(x))[0];
+    const word = { offshore: 'offshore', cross: 'cross-shore', onshore: 'onshore' }[top];
+    const light = now.kmh <= R.wind.light ? 'light, ' : now.kmh >= 28 ? 'strong, ' : '';
+    if (spots.length === 1) return { cat: top, text: `${light}${word} here` };
+    const share = n(top) / cats.length;
+    return { cat: top, text: share >= 0.75 ? `${light}${word} at most spots` : `${light}mostly ${word}`, detail: `${word} at ${n(top)} of ${cats.length} spots` };
+  }
+  function windNowCard(now, read, label = 'Wind now') {
+    const old = now.age > 75;
+    return `<div class="now" style="--c:${windCol(read.cat)}" role="group" aria-label="${label}: ${now.calm ? 'calm' : `${cmp(now.d)} ${Math.round(now.kmh)} kilometres an hour`}, ${read.detail || read.text}. ${now.name} at ${clockExact(now.t)}">
+      <div class="now-dial" aria-hidden="true"><i></i>${now.calm ? '<b class="now-calm"></b>' : `<svg viewBox="0 0 24 24" style="transform:rotate(${now.d}deg)"><path d="M12 4v15M7 14l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
+      <div class="now-txt" aria-hidden="true">
+        <div class="now-k"><span class="pulse${old ? ' is-old' : ''}"></span>${label}</div>
+        <div class="now-v"><em>${now.calm ? 'Calm' : cmp(now.d)}</em> · ${read.text}</div>
+        <div class="now-s">${old ? `<span class="is-old">${agoStr(now.age)}</span>` : clockExact(now.t)} · ${esc(now.name)}</div>
+      </div>
+      <div class="now-n" aria-hidden="true"><b>${Math.round(now.kmh || 0)}<span class="unit">km/h</span></b><small>${now.gust ? `gusts ${Math.round(now.gust)}` : 'BoM'}</small></div>
+    </div>`;
+  }
+  function renderWindNow() {
+    const el = $('#wind-now');
+    if (!el) return;
+    const now = ui.day === 0 && stationNow(areaOf(ui.region).wind);
+    el.innerHTML = now ? windNowCard(now, windRead(now, C.spots.filter((s) => s.region === ui.region))) : '';
+  }
+  function spotWindHtml(s) {
+    const now = stationNow(nearestStation(s).id);
+    return now ? windNowCard(now, windRead(now, [s])) : '';
+  }
+
+  /* ---------------- Swell arriving (upstream buoy jumps) ---------------- */
+  function arrival(b) {
+    const obs = (raw && raw.buoys && raw.buoys[b.site]) || [];
+    if (obs.length < 8) return null;
+    const last = obs[obs.length - 1], tl = toMin(last.t);
+    if (toMin(nowStr()) - tl > 180) return null;
+    const avg = (x, y) => { const v = obs.filter((o) => { const m = tl - toMin(o.t); return m >= x && m < y; }).map((o) => o.hs); return v.length ? v.reduce((s, z) => s + z, 0) / v.length : null; };
+    const now = avg(0, 60), then = avg(180, 240);
+    if (now == null || then == null || now - then < 0.3 || now < then * 1.2) return null;
+    const from = last.dir;
+    if (from != null && (from < 90 || from > 225)) return null; // only S–E swell reaches the upstream buoy first
+    return { b, now, then, last, series: obs.filter((o) => tl - toMin(o.t) <= 360) };
+  }
+  function renderArrive() {
+    const el = $('#arrive');
+    if (!el) return;
+    const hit = ui.day === 0 && C.buoys.filter((b) => b.upstream && b.region === ui.region).map(arrival).find(Boolean);
+    if (!hit) { el.innerHTML = ''; return; }
+    const { b, now, then, last, series } = hit;
+    const t0 = toMin(series[0].t), t1 = toMin(last.t), hs = series.map((o) => o.hs), lo = Math.min(...hs), hi = Math.max(...hs);
+    const pts = series.map((o) => `${(((toMin(o.t) - t0) / Math.max(1, t1 - t0)) * 200).toFixed(1)} ${(27 - ((o.hs - lo) / Math.max(0.05, hi - lo)) * 23).toFixed(1)}`);
+    const line = 'M' + pts.join(' L');
+    el.innerHTML = `<section class="arrive" aria-label="Swell arriving">
+      <div class="arrive-top">
+        <span class="arrive-k"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2M2.5 19.5c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2M7 9.5a5 5 0 0 1 9.4-2.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Swell arriving</span>
+        <span class="arrive-x">${esc(b.name)} · ${clockExact(last.t)}</span>
+      </div>
+      <h3>Building ${f1(now - then)}${TS}m in 3 hours</h3>
+      <p>The ${esc(b.name)} buoy went from <b>${f1(then)} to ${f1(now)}${TS}m</b>${last.tp ? ` at ${Math.round(last.tp)}${TS}s` : ''}${last.dir != null ? ` from the ${cmp(last.dir)}` : ''}. Swell from the south usually shows on the ${esc(areaName(ui.region))} <b>${esc(b.lead || 'soon')} later</b>.</p>
+      <div class="arrive-spark" aria-hidden="true">
+        <svg viewBox="0 0 200 30" preserveAspectRatio="none"><defs><linearGradient id="arrG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#42b8ff" stop-opacity=".28"/><stop offset="1" stop-color="#42b8ff" stop-opacity="0"/></linearGradient></defs><path class="ar" d="${line} L200 30 L0 30Z"/><path class="ln" d="${line}"/></svg>
+        <span>last 6${TS}h<b>${f1(last.hs)}${TS}m</b></span>
+      </div>
+    </section>`;
+  }
+
+  /* ---------------- Beach safety (SLSA Beachsafe, via data/safety.json) ---------------- */
+  let safety = store.get('dawnie:safety') || null;
+  async function fetchSafety() {
+    try { safety = await getJSON(`data/safety.json?t=${Date.now()}`); store.set('dawnie:safety', safety); status.safety = 'ok'; }
+    catch (e) { status.safety = safety ? 'warn' : 'err'; console.warn('beach safety', e); }
+    if (!model) return;
+    renderSources();
+    const sp = curSpot(), el = $('#spot-safety');
+    if (sp && el) el.innerHTML = safetyBlock(sp.spot);
+  }
+  const HAZ = (n) => (n <= 3 ? ['var(--r3)', 'Least hazardous'] : n <= 6 ? ['var(--r2)', 'Moderately hazardous'] : n <= 8 ? ['var(--big)', 'Highly hazardous'] : ['var(--big)', 'Extremely hazardous']);
+  const hm = (s) => clock(`2000-01-01T${s}`);
+  // Surf club first (it's the name on the tower), the lifeguard service shortened.
+  const clubLine = (clubs) => (clubs || []).map((c) => (/lifeguard/i.test(c) ? 'Lifeguards' : c))
+    .sort((x, y) => (x === 'Lifeguards') - (y === 'Lifeguards')).join(' · ') || 'Unpatrolled beach';
+  function safetyBlock(s) {
+    const b = safety && safety.spots && safety.spots[s.id];
+    if (!b) return '';
+    const today = nowStr().slice(0, 10);
+    const fresh = safety.date && toMin(today) - toMin(safety.date) <= 2 * 1440;
+    const week = fresh ? b.week.filter((d) => d.d >= today).slice(0, 7) : [];
+    const t = week.find((d) => d.d === today);
+    const flag = (on) => `<svg class="sf-flag" viewBox="0 0 15 17" aria-hidden="true"><path d="M1.5 1v15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M2.5 1.5h11v4.6h-11z" fill="${on ? '#eb5757' : 'var(--line-2)'}"/><path d="M2.5 6.1h11v4.6h-11z" fill="${on ? '#f2c94c' : 'var(--line-2)'}"/></svg>`;
+    const [hc, hw] = b.hazard ? HAZ(b.hazard) : ['var(--tx-3)', ''];
+    const same = b.title && b.title.toLowerCase().replace(/[^a-z]/g, '').startsWith(s.short.toLowerCase().replace(/[^a-z]/g, '').slice(0, 5));
+    return `<section class="d-sec">
+      <div class="d-sec-head"><h2>Beach safety</h2><span>Surf Life Saving</span></div>
+      <div class="safety">
+        <div class="sf-grid">
+          <div class="sf-cell">
+            <div class="sf-k">${t && t.s ? 'Patrolled today' : fresh ? 'Not patrolled today' : 'Patrols'}</div>
+            <div class="sf-v${t && t.s ? '' : ' is-off'}">${flag(t && t.s)}${t && t.s ? `${hm(t.s)}–${hm(t.e)}` : fresh ? 'No flags' : 'Check on arrival'}</div>
+            <div class="sf-s">${esc(clubLine(b.clubs))}</div>
+          </div>
+          ${b.hazard ? `<div class="sf-cell" style="--hc:${hc}">
+            <div class="sf-k">Hazard rating</div>
+            <div class="sf-v">${b.hazard}<span class="sf-of">/10</span></div>
+            <div class="sf-bar" role="img" aria-label="${b.hazard} out of 10, ${hw.toLowerCase()}">${Array.from({ length: 10 }, (_, i) => `<i class="${i < b.hazard ? 'on' : ''}"></i>`).join('')}</div>
+          </div>` : ''}
+        </div>
+        ${week.length ? `<div class="sf-week" role="list" aria-label="Patrols this week">${week.map((d) => `<div role="listitem" class="${d.d === today ? 'today' : ''}" aria-label="${wd(d.d)}: ${d.s ? `${hm(d.s)} to ${hm(d.e)}` : 'not patrolled'}"><b>${wd(d.d)}</b><i class="${d.s ? 'on' : ''}"></i></div>`).join('')}</div>` : ''}
+        ${b.hazards && b.hazards.length ? `<div class="sf-hz">${b.hazards.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+        <div class="sf-foot"><span>${same ? '' : `Nearest patrolled beach: ${esc(b.title)} · `}Updated ${clock(safety.updated)}</span><a href="${esc(b.url)}" target="_blank" rel="noopener">Beachsafe<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+      </div>
+      <p class="fine sf-fine">Patrol hours and hazards from Surf Life Saving’s Beachsafe, checked once a day. Surf between the flags when you can, and check conditions on arrival.</p>
+    </section>`;
   }
 
   /* ---------------- Track record ---------------- */
@@ -1310,7 +1473,7 @@
     const lean = Math.abs(ref.bias) < 0.05 ? 'has no steady lean big or small'
       : `runs about ${f1(Math.abs(ref.bias))}${TS}m ${ref.bias < 0 ? 'small' : 'big'}`;
     el.innerHTML = `<article class="buoy track">${head}
-      <p class="track-lede">How often the forecast was within ${f1(track.tol)}${TS}m of what the ${ui.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast'} buoys measured, ${hourLbl(track.hours[0])}–${hourLbl(track.hours[1] - 1)}.</p>
+      <p class="track-lede">How often the forecast was within ${f1(track.tol)}${TS}m of what the ${areaName(ui.region)} buoys measured, ${hourLbl(track.hours[0])}–${hourLbl(track.hours[1] - 1)}.</p>
       <dl class="buoy-stats track-stats">${cells}</dl>
       <p class="track-note">Typical miss ${ref.mae.toFixed(2)}${TS}m · the forecast ${lean}. Updated ${whenStr(track.updated)}.</p>
     </article>`;
@@ -1356,7 +1519,8 @@
   }
 
   /* ---------------- Data sources ---------------- */
-  const SOURCES = { marine: ['Swell', 'Open-Meteo Marine'], wind: ['Wind', 'Open-Meteo'], ext: ['Outlook', 'GFS + ECMWF models'], tides: ['Tides', 'Maritime Safety Qld'], buoys: ['Buoys', 'Qld Coastal Data System'] };
+  const SOURCES = { marine: ['Swell', 'Open-Meteo Marine'], wind: ['Wind', 'Open-Meteo'], ext: ['Outlook', 'GFS + ECMWF models'], tides: ['Tides', 'Maritime Safety Qld'], buoys: ['Buoys', 'Qld Coastal Data System'],
+    live: ['Wind now', 'Bureau of Meteorology'], safety: ['Beach safety', 'SLSA Beachsafe'] };
   function renderSources() {
     const at = raw && raw.fetchedAt ? whenStr(bneStr(raw.fetchedAt)) : '';
     let latest = '';
@@ -1366,6 +1530,8 @@
       if (s === 'err') return 'Unavailable';
       if (s === 'warn') return k === 'tides' && raw && raw.tidesFallback ? 'Model estimate' : `Saved${at ? ' · ' + at : ''}`;
       if (k === 'buoys') return latest ? `Latest ${whenStr(latest).replace(clock(latest), clockExact(latest))}` : 'Live';
+      if (k === 'live') { const t = liveLatest(); return t ? `Latest ${whenStr(t).replace(clock(t), clockExact(t))}` : 'Live'; }
+      if (k === 'safety') return safety && safety.updated ? `Daily · ${whenStr(safety.updated)}` : 'Daily';
       return isOffline() && at ? `Saved · ${at}` : 'Live';
     };
     $('#sources').innerHTML = Object.entries(status).map(([k, s]) =>
@@ -1432,19 +1598,20 @@
 
   function renderDetail(sp) {
     const s = sp.spot, el = $('#detail');
-    const port = C.tides[s.tidePort].name;
+    const port = s.tidePort ? C.tides[s.tidePort].name : 'Modelled';
     ensureBlock();
     const days = dayDates(3).map((d) => ({ d, slots: BLOCKS.map((b) => slotFor(sp, d, b.id)) })).filter((x) => x.slots.some(Boolean));
     const win = `${cmp(s.swell.ideal - s.swell.spread)}–${cmp(s.swell.ideal + s.swell.spread)}`;
     el.innerHTML = `
       <div class="d-top">
         <button class="icon-btn" id="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="crumb">${s.region === 'sc' ? 'Sunshine Coast' : 'Gold Coast'}</span>
+        <span class="crumb">${areaName(s.region)}</span>
         ${starBtn(s.id, s.name, ' icon-btn d-fav')}
       </div>
       <header class="d-head">
         <div class="d-kicker">${TYPE[s.type] || 'Surf break'}</div>
-        <h1 class="d-title">${esc(s.name)}</h1>
+        <h1 class="d-title">${esc(s.name)}${s.log ? '<span class="shaka" role="img" aria-label="Longboard pick">🤙</span>' : ''}</h1>
+        ${s.log ? `<p class="lb-note"><span class="shaka" aria-hidden="true">🤙</span>Longboard pick: ${esc(s.log)}</p>` : ''}
         <div class="d-spec">
           ${compassGlyph(s)}
           <dl>
@@ -1455,6 +1622,7 @@
           </dl>
         </div>
         <p class="d-note">${esc(s.note)}</p>
+        <div id="spot-wind">${spotWindHtml(s)}</div>
       </header>
       <section class="d-sec">
         <div class="d-sec-head"><h2>Next 3 days</h2><span>Dawn · Midday · Arvo</span></div>
@@ -1491,6 +1659,7 @@
         <div class="d-sec-head"><h2>Tide planner</h2><span>Any date</span></div>
         <div id="tideplan" class="tideplan"></div>
       </section>
+      <div id="spot-safety">${safetyBlock(s)}</div>
       ${guideBlock(s)}
     `;
     // rows scroll to just below the sticky day header (its height varies with the tide curve)
@@ -1521,8 +1690,11 @@
     for (let i = 1; i < H.length - 1; i++) {
       const a = H[i - 1].tide, b = H[i].tide, c = H[i + 1].tide;
       if (!a || !b || !c) continue;
-      if (b.h >= a.h && b.h > c.h) out.push({ m: toMin(H[i].t), t: H[i].t, h: b.h, hi: true });
-      else if (b.h <= a.h && b.h < c.h) out.push({ m: toMin(H[i].t), t: H[i].t, h: b.h, hi: false });
+      const hi = b.h >= a.h && b.h > c.h, lo = b.h <= a.h && b.h < c.h;
+      if (!hi && !lo) continue;
+      const den = a.h - 2 * b.h + c.h, off = den ? clamp((a.h - c.h) / (2 * den), -0.5, 0.5) : 0; // vertex, in hours
+      const m = Math.round(toMin(H[i].t) + off * 60);
+      out.push({ m, t: new Date(m * 60000).toISOString().slice(0, 16), h: b.h - ((a.h - c.h) * off) / 4, hi, model: true });
     }
     return out;
   }
@@ -1804,11 +1976,17 @@
       else $('.top5').scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' });
       return;
     }
-    const reg = t.closest('.region button');
+    const reg = t.closest('.region button, [data-area]');
     if (!model && (reg || t.closest('.day,[data-goday],[data-mday],[data-blk]'))) return; // nothing to switch yet
     const blk = t.closest('[data-blk]');
     if (blk) { if (blk.dataset.blk !== ui.block) haptic(); ui.block = blk.dataset.blk; ui.blockAuto = false; renderHome(); swapIn(); return; }
-    if (reg) { if (reg.dataset.region !== ui.region) haptic(); ui.region = reg.dataset.region; store.set('dawnie:region', ui.region); ui.date = null; renderHome(); swapIn(); return; }
+    if (reg) {
+      // a state tab returns to the area last used in that state; an area pill picks that area
+      const next = reg.dataset.area || store.get(`dawnie:area:${reg.dataset.state}`) || C.areas.find((x) => x.state === reg.dataset.state).id;
+      if (next === ui.region) return;
+      haptic(); ui.region = next; store.set('dawnie:region', next); store.set(`dawnie:area:${areaOf(next).state}`, next);
+      ui.date = null; ui.showAll = false; renderHome(); swapIn(); return;
+    }
     const day = t.closest('.day');
     if (day) { if (day.dataset.i && +day.dataset.i !== ui.day) { haptic(); pickDay(+day.dataset.i); renderHome(); swapIn(); } return; }
     const go = t.closest('[data-goday]');
@@ -2015,7 +2193,11 @@
     if (btn.dataset.stop) { delete btn.dataset.stop; btn.classList.remove('spin'); }
   });
   // Keep relative times ("3 h ago") honest while the app sits open.
-  setInterval(() => { if (model && !document.hidden && !net.busy) { renderUpdated(); renderBuoys(); renderSources(); } }, 60e3);
+  setInterval(() => {
+    if (!model || document.hidden || net.busy) return;
+    renderUpdated(); renderBuoys(); renderSources();
+    if (Date.now() - liveAt > 10 * 60e3) fetchLive(); else renderWindNow();
+  }, 60e3);
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});

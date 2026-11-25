@@ -139,7 +139,7 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
   background: var(--tx); transform-origin: left;
   transition: transform .4s var(--ease);
 }
-.region[data-active="gc"] .region-pill { transform: translateX(100%); }
+.region[data-active="nsw"] .region-pill { transform: translateX(100%); }
 
 /* ---------- Day tabs: three-column ruler ---------- */
 .days {
@@ -913,9 +913,11 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent);
 }
 .t5-row:first-child .t5-rank { color: var(--bg); background: var(--c); box-shadow: none; }
-.t5-row .name { display: grid; grid-template-columns: auto auto 1fr; align-items: center; column-gap: 5px; font-size: 15.5px; }
+.t5-row .name { display: grid; grid-template-columns: minmax(0, max-content) auto auto 1fr; align-items: center; column-gap: 0; font-size: 15.5px; }
+.t5-row .name .shaka, .t5-row .name .t5-fav { margin-left: 4px; }
+.t5-row .name .shaka { font-size: 12px; }
 .t5-row .nm { grid-column: 1; }
-.t5-fav { grid-column: 2; width: 11px; height: 11px; fill: var(--r2); }
+.t5-fav { width: 11px; height: 11px; fill: var(--r2); }
 .t5-rate { grid-column: 1 / -1; margin-top: 2px; font: italic 400 15px/1 var(--serif); color: var(--c); letter-spacing: 0; }
 .t5-surf, .t5-wind { display: flex; flex-direction: column; gap: 4px; min-width: 0; white-space: nowrap; }
 .t5-surf { font: 500 14.5px/1 var(--mono); letter-spacing: -0.03em; }
@@ -988,3 +990,112 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
 .mb-s i { font-style: normal; font-family: var(--sans); font-size: 10.5px; white-space: nowrap; }
 .m-blocks li.gone .mb-r { font-size: 15px; color: var(--tx-3); }
 .m-blocks li.gone::before { display: none; }
+
+/* ---------- Area switch: state tabs above, area pills below ---------- */
+.region { margin-bottom: 12px; }
+.area { display: flex; gap: 6px; margin: 0 0 var(--sp-4); min-height: 34px; }
+.area button {
+  display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 500; color: var(--tx-3); border: 1px solid var(--line);
+  transition: background .2s, color .2s, border-color .2s, transform .15s var(--ease);
+}
+.area button small { font: 400 11px/1 var(--mono); color: var(--tx-3); opacity: .8; letter-spacing: -0.02em; }
+.area button[aria-pressed="true"] { background: var(--card-2); color: var(--tx); border-color: var(--line-2); }
+.area button:active { transform: scale(.97); }
+
+/* ---------- Longboard pick ---------- */
+.shaka { font-size: 13px; line-height: 1; font-style: normal; }
+.d-title .shaka { font-size: 28px; margin-left: 10px; vertical-align: 5px; }
+.lb-note {
+  display: inline-flex; align-items: center; gap: 8px; margin: 14px 0 -4px 1px; padding: 6px 12px 6px 9px; border-radius: 999px;
+  font-size: 12.5px; color: var(--tx-2);
+  background: color-mix(in srgb, var(--acc) 7%, transparent); border: 1px solid color-mix(in srgb, var(--acc) 20%, transparent);
+}
+.lb-note .shaka { font-size: 14px; }
+.w-spot .shaka, .o-spot .shaka { margin-left: 4px; font-size: 11.5px; }
+
+/* ---------- Wind now (BoM) ---------- */
+.now {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
+  padding: 12px 14px 12px 12px; margin: 0 0 var(--sp-4); border-radius: 16px;
+  background: linear-gradient(180deg, var(--card-2), var(--card)); border: 1px solid var(--line);
+}
+.now-dial {
+  position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--c);
+  background: color-mix(in srgb, var(--c) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.now-dial svg { width: 22px; height: 22px; transition: transform .6s var(--ease); }
+.now-dial i { position: absolute; top: 3px; left: 50%; width: 1px; height: 5px; margin-left: -.5px; background: var(--tx-3); opacity: .6; }
+.now-calm { width: 10px; height: 10px; border-radius: 50%; border: 1.6px solid currentColor; }
+.now-k { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); }
+.now-k .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--r3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--r3) 20%, transparent); }
+.now-k .pulse.is-old { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 20%, transparent); }
+.now-v { margin-top: 6px; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now-v em { font-style: normal; color: var(--c); }
+.now-s { margin-top: 3px; font: 400 10.5px/1.2 var(--mono); color: var(--tx-3); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now-s .is-old { color: var(--warn); }
+.now-n { text-align: right; }
+.now-n b { display: block; font: 500 26px/0.95 var(--mono); letter-spacing: -0.05em; }
+.now-n b .unit { font: 400 11px/1 var(--sans); color: var(--tx-2); letter-spacing: 0; margin-left: 2px; }
+.now-n small { display: block; margin-top: 5px; font: 400 10.5px/1 var(--mono); color: var(--tx-3); }
+#spot-wind .now { margin: 18px 0 0; }
+
+/* ---------- Swell arriving (upstream buoy) ---------- */
+.arrive {
+  position: relative; overflow: hidden; margin: 0 0 var(--sp-4); padding: 13px 14px 13px 16px; border-radius: 16px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--r4) 13%, var(--card)) 0%, var(--card) 70%);
+  border: 1px solid color-mix(in srgb, var(--r4) 26%, transparent);
+}
+.arrive::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 3px 3px 0; background: var(--r4); }
+.arrive-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.arrive-k { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--r4); }
+.arrive-k svg { width: 16px; height: 16px; }
+.arrive-x { font: 400 10.5px/1 var(--mono); color: var(--tx-3); white-space: nowrap; }
+.arrive h3 { margin: 9px 0 0; font: 400 22px/1.1 var(--serif); letter-spacing: -0.005em; }
+.arrive p { margin: 5px 0 0; font-size: 13px; line-height: 1.5; color: var(--tx-2); text-wrap: pretty; }
+.arrive p b { color: var(--tx); font-weight: 500; }
+.arrive-spark { display: flex; align-items: end; gap: 10px; margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); }
+.arrive-spark svg { flex: 1; height: 30px; }
+.arrive-spark .ln { fill: none; stroke: var(--r4); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.arrive-spark .ar { fill: url(#arrG); }
+.arrive-spark span { font: 400 10.5px/1.3 var(--mono); color: var(--tx-3); text-align: right; white-space: nowrap; }
+.arrive-spark span b { display: block; font: 500 13px/1.1 var(--mono); color: var(--tx); letter-spacing: -0.02em; }
+
+/* ---------- Buoy check: upstream tag, area note ---------- */
+.buoy-up {
+  display: inline-block; margin-left: 8px; padding: 3px 7px; border-radius: 999px; vertical-align: 1px;
+  font: 500 9.5px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--r4);
+  background: color-mix(in srgb, var(--r4) 12%, transparent);
+}
+#buoy-note:empty { display: none; }
+#buoy-note { margin-top: 10px; }
+
+/* ---------- Beach safety (spot page) ---------- */
+.safety { border-radius: var(--r); border: 1px solid var(--line); background: linear-gradient(180deg, var(--card-2), var(--card) 70%); overflow: hidden; }
+.sf-grid { display: grid; grid-template-columns: 1.3fr 1fr; }
+.sf-grid > .sf-cell:only-child { grid-column: 1 / -1; }
+.sf-cell { padding: 14px 16px 13px; min-width: 0; }
+.sf-cell + .sf-cell { border-left: 1px solid var(--line); }
+.sf-k { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--tx-3); }
+.sf-v { display: flex; align-items: center; gap: 8px; margin-top: 7px; font: 500 16px/1.1 var(--mono); letter-spacing: -0.03em; color: var(--tx); white-space: nowrap; }
+.sf-v.is-off { color: var(--tx-3); font: 500 14px/1.1 var(--sans); letter-spacing: 0; }
+.sf-of { color: var(--tx-3); font-size: 12px; margin-left: -6px; }
+.sf-flag { width: 15px; height: 17px; flex: none; color: var(--tx-3); }
+.sf-s { margin-top: 5px; font-size: 11.5px; color: var(--tx-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sf-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; margin-top: 9px; }
+.sf-bar i { height: 4px; border-radius: 1px; background: var(--line-2); }
+.sf-bar i.on { background: var(--hc); }
+.sf-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 16px 14px; }
+.sf-week div { text-align: center; }
+.sf-week b { display: block; font-size: 9.5px; font-weight: 500; letter-spacing: .1em; color: var(--tx-3); text-transform: uppercase; }
+.sf-week i { display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: var(--line-2); }
+.sf-week i.on { background: linear-gradient(90deg, #f2c94c 50%, #eb5757 50%); }
+.sf-week .today b { color: var(--tx); }
+.sf-hz { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.sf-hz span { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 999px; font-size: 11.5px; color: var(--tx-2); background: var(--bg-2); border: 1px solid var(--line); }
+.sf-hz span::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--r2); }
+.sf-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 16px 8px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--tx-3); }
+.sf-foot span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-foot a { flex: none; color: var(--tx-2); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
+.sf-foot a svg { width: 12px; height: 12px; }
+.sf-fine { margin-top: 10px; font-size: 11.5px; color: var(--tx-3); }

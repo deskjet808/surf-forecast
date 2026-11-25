@@ -69,15 +69,18 @@
     </button>
   </header>
 
-  <div class="region" role="tablist" aria-label="Region">
-    <button role="tab" data-region="sc">Sunshine Coast</button>
-    <button role="tab" data-region="gc">Gold Coast</button>
+  <div class="region" role="tablist" aria-label="State">
+    <button role="tab" data-state="qld">Queensland</button>
+    <button role="tab" data-state="nsw">New South Wales</button>
     <span class="region-pill" aria-hidden="true"></span>
   </div>
+  <div class="area" id="area" role="group" aria-label="Area"></div>
 
   <div class="pane" id="pane-today" data-pane="today">
     <nav class="days" id="days" aria-label="Day"></nav>
     <div id="blk-today"></div>
+    <div id="arrive"></div>
+    <div id="wind-now"></div>
 
     <section class="block top5" aria-label="Top spots">
       <div class="block-head"><h2>Top 5</h2><span class="block-meta" id="window-meta"></span></div>
@@ -93,6 +96,7 @@
     <section class="block">
       <div class="block-head"><h2>Buoy check</h2><span class="block-meta">Live vs forecast</span></div>
       <div id="buoys" class="buoys"></div>
+      <p class="buoy-note" id="buoy-note"></p>
       <div id="track"></div>
     </section>
   </div>

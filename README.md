@@ -27,3 +27,17 @@ Each rating shows a confidence figure (5–95%) with three dots. It comes from h
 ## Forecast track record
 
 `.github/workflows/verify.yml` runs `tools/verify.py` at 7:17am and 7:17pm Brisbane. It saves what Open-Meteo forecast at each buoy the same day, a day ahead and two days ahead (its previous-runs data), saves the buoys' hourly wave height, and writes `data/track.json`. Buoy check shows how often the forecast was within 0.2 m of the buoys between 4am and 7pm over the last 30 days. It needs a week of data before it shows figures. GitHub can turn scheduled jobs off after 60 days without other activity in the repo; if the figures stop updating, re-enable it in the Actions tab.
+
+## Regions
+
+The switch at the top picks a state (Queensland, New South Wales), then an area: Sunshine Coast, Gold Coast, Northern NSW or Sydney. Areas live in `config.js` (`areas`). NSW has no Maritime Safety Queensland tide table, so its tides are modelled from Open-Meteo sea level (heights relative to mean sea level; turn times about ±30 min). All times are Brisbane time, NSW included.
+
+## Wind now, beach safety, swell arriving
+
+- **Wind now:** `.github/workflows/live.yml` runs `tools/live.py` every 30 minutes and saves the latest Bureau of Meteorology readings (public FTP, `windStations` in `config.js`) to `data/live.json`. Today shows the area's station; each spot page shows its nearest one.
+- **Beach safety:** once a day the same job reads Surf Life Saving's Beachsafe patrol hours, hazard rating and hazards into `data/safety.json`. `tools/beachsafe.json` maps each spot to its nearest Beachsafe beach; re-run `python tools/beachsafe_match.py` after adding spots and check the matches.
+- **Swell arriving:** when an upstream buoy (`upstream: true` in `config.js`: Point Lookout for the Sunshine Coast, Tweed Offshore for the Gold Coast) jumps 0.3 m or more in 3 hours on a south to east swell, Today shows a banner. There's no open buoy feed for Byron or Sydney.
+
+## Longboard picks 🤙
+
+Spots with a `log` note in `config.js` get a 🤙 wherever their name appears, plus the note on their spot page.

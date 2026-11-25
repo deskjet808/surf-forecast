@@ -44,10 +44,12 @@ def get(url, timeout=40):
 def buoys():
     src = (ROOT / 'config.js').read_text(encoding='utf-8')
     block = src[src.index('buoys: ['):]
-    block = block[:block.index(']')]
+    block = block[:block.index('\n  ],')]
     out = []
-    for m in re.finditer(r"site:\s*'([^']+)'.*?region:\s*'(\w+)'.*?lat:\s*(-?[\d.]+),\s*lon:\s*(-?[\d.]+)", block):
-        out.append({'site': m[1], 'region': m[2], 'lat': float(m[3]), 'lon': float(m[4])})
+    for line in block.splitlines():
+        m = re.search(r"site:\s*'([^']+)'.*?region:\s*'(\w+)'.*?lat:\s*(-?[\d.]+),\s*lon:\s*(-?[\d.]+)", line)
+        if m and 'upstream: true' not in line:  # upstream buoys are an early warning, not this region's record
+            out.append({'site': m[1], 'region': m[2], 'lat': float(m[3]), 'lon': float(m[4])})
     if not out:
         sys.exit('No buoys found in config.js')
     return out
