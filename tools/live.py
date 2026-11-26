@@ -22,6 +22,7 @@ MAP = ROOT / 'tools' / 'beachsafe.json'
 BNE = timezone(timedelta(hours=10))
 UA = 'Mozilla/5.0 (compatible; cowabunga-forecast/1.0; +https://deskjet808.github.io/surf-forecast/)'
 KEEP_OBS = 8  # about 3 hours of half-hourly readings
+HIST, HIST_DAYS = ROOT / 'data' / 'windhist.json', 7  # hourly wind for verify.py to score forecasts
 
 
 def get_json(url, timeout=30):
@@ -133,6 +134,20 @@ def safety(today):
     return out
 
 
+def save_history(w, now):
+    """On-the-hour readings for the last HIST_DAYS, so verify.py can score the wind forecasts.
+    {station: {"YYYY-MM-DDTHH": [direction°, km/h]}}; direction is null when calm."""
+    hist = json.loads(HIST.read_text(encoding='utf-8')) if HIST.exists() else {}
+    cut = (now - timedelta(days=HIST_DAYS)).strftime('%Y-%m-%dT%H')
+    for sid, s in w.items():
+        h = hist.setdefault(sid, {})
+        for o in s['obs']:
+            if o['t'][14:16] == '00' and o['kmh'] is not None:
+                h[o['t'][:13]] = [o['deg'], o['kmh']]
+        hist[sid] = {k: v for k, v in sorted(h.items()) if k >= cut}
+    HIST.write_text(json.dumps(hist, separators=(',', ':')))
+
+
 def main():
     now = datetime.now(BNE)
     today = now.strftime('%Y-%m-%d')
@@ -143,6 +158,7 @@ def main():
     LIVE.parent.mkdir(exist_ok=True)
     LIVE.write_text(json.dumps({'updated': now.strftime('%Y-%m-%dT%H:%M'), 'wind': w}, separators=(',', ':')))
     print('wind stations:', len(w))
+    save_history(w, now)
 
     old = json.loads(SAFETY.read_text(encoding='utf-8')) if SAFETY.exists() else {}
     if '--safety' in sys.argv or (old.get('date') != today and now.hour >= 4):
