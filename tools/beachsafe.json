@@ -271,9 +271,9 @@
   "locked": true
  },
  "ballina-lighthouse": {
-  "slug": "ballina-head",
-  "title": "Ballina Head",
-  "metres": 240,
+  "slug": "lighthouse",
+  "title": "Lighthouse",
+  "metres": 170,
   "locked": true
  },
  "shelly-ballina": {

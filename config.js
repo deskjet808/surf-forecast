@@ -170,7 +170,7 @@ window.DAWNIE = {
       note: "Caloundra's swell magnet: A-frames on SE swell. Needs NW–W wind, so go early before the SE sea breeze." },
 
     { id: 'happys', name: 'Happy Valley, Caloundra', short: 'Happy Valley', region: 'sc', type: 'beach',
-      lat: -26.80900, lon: 153.13700, faces: 160, offshore: 340,
+      lat: -26.80900, lon: 153.13700, faces: 140, offshore: 320,
       swell: { ideal: 150, spread: 45 }, sizeFactor: 0.8, tide: 'mid',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
       note: 'Cruisy lefts on the channel-mouth banks at Happy Valley. Needs SE–S swell and N–NW wind. Banks shift since the 2022 Bribie breakthrough; watch run-out currents.' },
@@ -183,13 +183,13 @@ window.DAWNIE = {
       note: "Long open beach north of Noosa, 4WD access only. Picks up everything; best on light W winds early." },
 
     { id: 'noosa-north-shore', name: 'Noosa North Shore Beach', short: 'Noosa Nth Shore', region: 'sc', type: 'beach',
-      lat: -26.37111, lon: 153.07377, faces: 80, offshore: 260,
+      lat: -26.37111, lon: 153.07377, faces: 60, offshore: 240,
       swell: { ideal: 100, spread: 50 }, sizeFactor: 0.85, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: "Open beach across the river from Noosa (ferry or 4WD). Banks shift with the river; clean in light W\u2013SW winds." },
 
     { id: 'noosa-bar', name: 'Noosa River Bar, Noosa Heads', short: 'Noosa Bar', region: 'sc', type: 'beach',
-      lat: -26.38018, lon: 153.08124, faces: 15, offshore: 195,
+      lat: -26.38018, lon: 153.08124, faces: 35, offshore: 215,
       swell: { ideal: 75, spread: 40 }, sizeFactor: 0.5, tide: 'mid',
       buoy: 'Mooloolaba', tidePort: 'mooloolaba',
       note: "River-mouth sandbar at the west end of Main Beach. Strong tidal currents on the run-out; best on the incoming tide." },
@@ -311,7 +311,7 @@ window.DAWNIE = {
       note: "Open beach south of Point Cartwright. Consistent banks; best early in light W winds." },
 
     { id: 'warana', name: 'Warana Beach', short: 'Warana', region: 'sc', type: 'beach',
-      lat: -26.72693, lon: 153.14087, faces: 90, offshore: 270,
+      lat: -26.72700, lon: 153.13660, faces: 90, offshore: 270,
       swell: { ideal: 105, spread: 55 }, sizeFactor: 0.95, tide: 'mid',
       buoy: 'Caloundra', tidePort: 'mooloolaba',
       note: "Patrolled open beach. Consistent, uncrowded banks; clean in W winds." },
@@ -398,7 +398,7 @@ window.DAWNIE = {
       note: "Punchy beach between the Tweed wall and Point Danger. Picks up every swell; crowded and fast, more shortboard than log." },
 
     { id: 'kingscliff', name: 'Kingscliff Beach', short: 'Kingscliff', region: 'nnsw', type: 'beach',
-      lat: -28.25300, lon: 153.57900, faces: 95, offshore: 275,
+      lat: -28.25300, lon: 153.57900, faces: 70, offshore: 250,
       swell: { ideal: 105, spread: 55 }, sizeFactor: 0.85, tide: 'mid',
       buoy: null, tidePort: null,
       note: "Open beach with rock walls holding the sand. Friendly banks on small days; clean in W winds." },
@@ -445,7 +445,7 @@ window.DAWNIE = {
       note: "Patrolled town beach. Sheltered from SE winds; small and friendly most days." },
 
     { id: 'broken-head', name: 'Broken Head', short: 'Broken Head', region: 'nnsw', type: 'point',
-      lat: -28.70582, lon: 153.61983, faces: 40, offshore: 220,
+      lat: -28.70400, lon: 153.61700, faces: 40, offshore: 220,
       swell: { ideal: 110, spread: 45 }, wrap: 0.4, sizeFactor: 0.85, tide: 'mid',
       buoy: null, tidePort: null,
       note: "Right-hand point in a nature reserve south of Byron. Clean in S\u2013SW winds; rocks at the top of the point." },
@@ -463,7 +463,7 @@ window.DAWNIE = {
       note: "Long open beach north of Lennox. Plenty of peaks to yourself; best in light W winds." },
 
     { id: 'ballina-lighthouse', name: 'Lighthouse Beach, Ballina', short: 'Ballina Lighthouse', region: 'nnsw', type: 'beach',
-      lat: -28.86550, lon: 153.59150, faces: 95, offshore: 275,
+      lat: -28.87150, lon: 153.59250, faces: 95, offshore: 275,
       swell: { ideal: 110, spread: 55 }, sizeFactor: 0.95, tide: 'mid',
       buoy: null, tidePort: null,
       note: "Patrolled open beach south of the Ballina breakwall. Consistent banks; strong rips near the wall." },
@@ -490,14 +490,14 @@ window.DAWNIE = {
       note: "Northern-beaches bay sheltered by Long Reef. Soft waves that suit logs and learners." },
 
     { id: 'bondi', name: 'Bondi Beach', short: 'Bondi', region: 'syd', type: 'beach',
-      lat: -33.89216, lon: 151.27793, faces: 115, offshore: 295,
+      lat: -33.89216, lon: 151.27793, faces: 140, offshore: 320,
       swell: { ideal: 135, spread: 55 }, sizeFactor: 0.85, tide: 'mid',
       buoy: null, tidePort: null,
       log: "Gentle north end on small days",
       note: "The famous one. The north end is gentle on small days; crowded, with a strong rip at the south end." },
 
     { id: 'tamarama', name: 'Tamarama Beach', short: 'Tamarama', region: 'syd', type: 'beach',
-      lat: -33.90090, lon: 151.27109, faces: 100, offshore: 280,
+      lat: -33.90090, lon: 151.27109, faces: 120, offshore: 300,
       swell: { ideal: 115, spread: 45 }, maxSize: 1.0, sizeFactor: 0.95, tide: 'mid',
       buoy: null, tidePort: null,
       note: "Tiny, punchy bay with rocks and strong rips. For experienced surfers only." },
