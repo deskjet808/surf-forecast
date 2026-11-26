@@ -773,7 +773,7 @@
 
   function arrow(deg, colourVar, size = 14) {
     // arrow points the way the wind is blowing TO
-    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="transform:rotate(${(deg + 180) % 360}deg);color:${colourVar}" aria-hidden="true"><path d="M12 3v17M6 14l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="transform:rotate(${deg % 360}deg);color:${colourVar}" aria-hidden="true"><path d="M12 3v17M6 14l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
   const WIND_COL = { offshore: 'var(--w-off)', cross: 'var(--w-cross)', onshore: 'var(--w-on)', glassy: 'var(--w-glassy)' };
   const windCol = (cat) => WIND_COL[cat];
