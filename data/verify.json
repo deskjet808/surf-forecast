@@ -1,20 +1,32 @@
 {
 "bom":{
  "gc":{
+  "2026-11-27/0":{"hs":1.8,"text":{"seas":"Around 1 metre.","swell":"Easterly 1.5 metres.","wind":"Easterly 10 to 15 knots turning northeasterly in the late evening. Winds reaching up to 20 knots offshore in the late evening."},"wind":[90,19,28]},
   "2026-11-27/1":{"hs":1.8,"text":{"seas":"Around 1 metre.","swell":"Easterly 1.5 metres.","wind":"East to southeasterly 10 to 15 knots tending east to northeasterly during the day. Winds reaching up to 20 knots offshore in the late evening."},"wind":[112,19,28]},
-  "2026-11-28/2":{"hs":2.02,"text":{"seas":"Around 1 metre, increasing to 1.5 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning, then tending northeasterly around 1 metre la","wind":"Northeasterly 15 to 20 knots turning northerly in the evening."},"wind":[45,28,37]}
+  "2026-11-28/1":{"hs":2.02,"text":{"seas":"Around 1 metre, increasing to 1.5 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning, then tending northeasterly around 1 metre la","wind":"Northeasterly 15 to 20 knots turning northerly in the evening."},"wind":[45,28,37]},
+  "2026-11-28/2":{"hs":2.02,"text":{"seas":"Around 1 metre, increasing to 1.5 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning, then tending northeasterly around 1 metre la","wind":"Northeasterly 15 to 20 knots turning northerly in the evening."},"wind":[45,28,37]},
+  "2026-11-29/2":{"hs":1.77,"text":{"seas":"1 to 1.5 metres.","swell":"Northeasterly 1 to 1.5 metres.","wind":"Northerly 15 to 20 knots turning northwesterly during the evening."},"wind":[0,28,37]}
  },
  "nnsw":{
+  "2026-11-27/0":{"hs":1.95,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore south of Cape Byron during the afternoon.","swell":"Easterly 1.5 metres.","wind":"Easterly 15 to 20 knots turning northeasterly in the late afternoon."},"wind":[90,28,37]},
   "2026-11-27/1":{"hs":1.95,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore south of Cape Byron during the afternoon.","swell":"Easterly 1.5 metres.","wind":"Southeasterly 10 to 15 knots turning east to northeasterly 15 to 20 knots during the morning and early afternoon."},"wind":[135,19,28]},
-  "2026-11-28/2":{"hs":2.15,"text":{"seas":"1 to 1.5 metres, increasing to 1.5 to 2 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1.5 metres during the morning, then tending northeasterly 1 to 1.5 metres around","wind":"Northeasterly 15 to 20 knots turning northerly 20 to 30 knots during the day."},"wind":[45,28,37]}
+  "2026-11-28/1":{"hs":2.15,"text":{"seas":"1 to 1.5 metres, increasing to 1.5 to 2 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1.5 metres during the morning, then tending northeasterly 1 to 1.5 metres around","wind":"Northeasterly 15 to 20 knots turning northerly 20 to 25 knots during the day. Winds reaching up to 30 knots offshore south of Yamba in the late evening."},"wind":[45,28,37]},
+  "2026-11-28/2":{"hs":2.15,"text":{"seas":"1 to 1.5 metres, increasing to 1.5 to 2 metres during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1.5 metres during the morning, then tending northeasterly 1 to 1.5 metres around","wind":"Northeasterly 15 to 20 knots turning northerly 20 to 30 knots during the day."},"wind":[45,28,37]},
+  "2026-11-29/2":{"hs":2.5,"text":{"seas":"1.5 to 2.5 metres.","swell":"Northeasterly around 1 metre, increasing to 1 to 2 metres during the afternoon.","wind":"Northerly 20 to 30 knots turning northwesterly 15 to 20 knots during the evening."},"wind":[0,37,56]}
  },
  "sc":{
+  "2026-11-27/0":{"hs":1.8,"text":{"seas":"Around 1 metre.","swell":"Easterly 1.5 metres.","wind":"Easterly 10 to 15 knots, reaching up to 20 knots offshore south of Maroochydore in the late evening."},"wind":[90,19,28]},
   "2026-11-27/1":{"hs":1.8,"text":{"seas":"Around 1 metre.","swell":"Easterly 1.5 metres.","wind":"Southeasterly 10 to 15 knots turning easterly early in the morning. Winds reaching up to 20 knots offshore south of Maroochydore in the late evening."},"wind":[135,19,28]},
-  "2026-11-28/2":{"hs":2.15,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning.","wind":"Northeasterly 15 to 20 knots."},"wind":[45,28,37]}
+  "2026-11-28/1":{"hs":2.15,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning.","wind":"Northeasterly 15 to 20 knots."},"wind":[45,28,37]},
+  "2026-11-28/2":{"hs":2.15,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore during the afternoon.","swell":"Easterly 1.5 to 2 metres, decreasing to 1 to 1.5 metres during the morning.","wind":"Northeasterly 15 to 20 knots."},"wind":[45,28,37]},
+  "2026-11-29/2":{"hs":1.95,"text":{"seas":"Around 1 metre, increasing to 1 to 1.5 metres offshore.","swell":"East to northeasterly 1.5 metres.","wind":"North to northeasterly 15 to 20 knots tending north to northwesterly during the day."},"wind":[22,28,37]}
  },
  "syd":{
+  "2026-11-27/0":{"hs":1.8,"text":{"seas":"Below 1 metre, increasing to 1 to 2 metres during the afternoon.","swell":"Easterly around 1 metre.","wind":"Northeasterly 15 to 20 knots, reaching up to 30 knots offshore in the late evening."},"wind":[45,28,37]},
   "2026-11-27/1":{"hs":1.8,"text":{"seas":"Around 1 metre, increasing to 1 to 2 metres during the afternoon.","swell":"Easterly around 1 metre.","wind":"Northeasterly 15 to 20 knots, reaching up to 30 knots offshore in the late evening."},"wind":[45,28,37]},
-  "2026-11-28/2":{"hs":2.57,"text":{"seas":"2 to 2.5 metres.","swell":"Northeasterly around 1 metre, increasing to 1 to 1.5 metres during the morning, then increasing to 1.5 to 2 metres durin","wind":"Northeasterly 20 to 30 knots turning northerly during the day."},"wind":[45,37,56]}
+  "2026-11-28/1":{"hs":2.57,"text":{"seas":"2 to 2.5 metres.","swell":"Northeasterly around 1 metre, increasing to 1 to 1.5 metres during the morning, then increasing to 1.5 to 2 metres durin","wind":"Northeasterly 20 to 30 knots turning northerly during the day."},"wind":[45,37,56]},
+  "2026-11-28/2":{"hs":2.57,"text":{"seas":"2 to 2.5 metres.","swell":"Northeasterly around 1 metre, increasing to 1 to 1.5 metres during the morning, then increasing to 1.5 to 2 metres durin","wind":"Northeasterly 20 to 30 knots turning northerly during the day."},"wind":[45,37,56]},
+  "2026-11-29/2":{"hs":2.66,"text":{"seas":"1.5 to 2.5 metres, decreasing to 1 metre during the morning.","swell":"Northeasterly 1.5 to 2 metres, decreasing to 1.5 metres during the morning.","wind":"North to northwesterly 15 to 25 knots shifting south to southeasterly 10 to 15 knots during the morning."},"wind":[338,28,46]}
  }
 },
 "fc":{
@@ -5785,12 +5797,12 @@
   "2026-11-26T11":{"ecmwf":[16.0,null,null,130,null,null],"gfs":[15.0,null,null,126,null,null],"main":[17.0,null,null,137,null,null]},
   "2026-11-26T12":{"ecmwf":[17.0,null,null,128,null,null],"gfs":[17.0,null,null,132,null,null],"main":[18.0,null,null,133,null,null]},
   "2026-11-26T13":{"ecmwf":[18.0,null,null,127,null,null],"gfs":[17.0,null,null,124,null,null],"main":[19.0,null,null,135,null,null]},
-  "2026-11-26T14":{"ecmwf":[18.0,null,null,128,null,null],"gfs":[16.0,null,null,134,null,null],"main":[20.0,null,null,137,null,null]},
-  "2026-11-26T15":{"ecmwf":[18.0,null,null,130,null,null],"gfs":[15.0,null,null,130,null,null],"main":[19.0,null,null,138,null,null]},
-  "2026-11-26T16":{"ecmwf":[17.0,null,null,132,null,null],"gfs":[15.0,null,null,135,null,null],"main":[18.0,null,null,133,null,null]},
-  "2026-11-26T17":{"ecmwf":[16.0,null,null,134,null,null],"gfs":[12.0,null,null,137,null,null],"main":[18.0,null,null,136,null,null]},
+  "2026-11-26T14":{"ecmwf":[17.0,null,null,126,null,null],"gfs":[16.0,null,null,134,null,null],"main":[20.0,null,null,137,null,null]},
+  "2026-11-26T15":{"ecmwf":[16.0,null,null,126,null,null],"gfs":[15.0,null,null,130,null,null],"main":[19.0,null,null,138,null,null]},
+  "2026-11-26T16":{"ecmwf":[16.0,null,null,128,null,null],"gfs":[15.0,null,null,135,null,null],"main":[18.0,null,null,133,null,null]},
+  "2026-11-26T17":{"ecmwf":[14.0,null,null,132,null,null],"gfs":[12.0,null,null,137,null,null],"main":[18.0,null,null,136,null,null]},
   "2026-11-26T18":{"ecmwf":[14.0,null,null,138,null,null],"gfs":[12.0,null,null,143,null,null],"main":[17.0,null,null,139,null,null]},
-  "2026-11-26T19":{"ecmwf":[12.0,null,null,142,null,null],"gfs":[12.0,null,null,149,null,null],"main":[16.0,null,null,146,null,null]}
+  "2026-11-26T19":{"ecmwf":[13.0,null,null,144,null,null],"gfs":[12.0,null,null,149,null,null],"main":[16.0,null,null,146,null,null]}
  },
  "94570":{
   "2026-11-12T04":{"ecmwf":[16.0,null,null,295,null,null],"gfs":[3.0,null,null,354,null,null],"main":[16.0,null,null,300,null,null]},
@@ -6027,12 +6039,12 @@
   "2026-11-26T11":{"ecmwf":[16.0,null,null,130,null,null],"gfs":[16.0,null,null,127,null,null],"main":[20.0,null,null,139,null,null]},
   "2026-11-26T12":{"ecmwf":[17.0,null,null,128,null,null],"gfs":[18.0,null,null,130,null,null],"main":[20.0,null,null,136,null,null]},
   "2026-11-26T13":{"ecmwf":[18.0,null,null,127,null,null],"gfs":[18.0,null,null,126,null,null],"main":[21.0,null,null,136,null,null]},
-  "2026-11-26T14":{"ecmwf":[18.0,null,null,128,null,null],"gfs":[16.0,null,null,128,null,null],"main":[22.0,null,null,138,null,null]},
-  "2026-11-26T15":{"ecmwf":[18.0,null,null,130,null,null],"gfs":[16.0,null,null,134,null,null],"main":[21.0,null,null,138,null,null]},
-  "2026-11-26T16":{"ecmwf":[17.0,null,null,132,null,null],"gfs":[16.0,null,null,134,null,null],"main":[18.0,null,null,132,null,null]},
-  "2026-11-26T17":{"ecmwf":[16.0,null,null,134,null,null],"gfs":[15.0,null,null,142,null,null],"main":[19.0,null,null,137,null,null]},
+  "2026-11-26T14":{"ecmwf":[17.0,null,null,126,null,null],"gfs":[16.0,null,null,128,null,null],"main":[22.0,null,null,138,null,null]},
+  "2026-11-26T15":{"ecmwf":[16.0,null,null,126,null,null],"gfs":[16.0,null,null,134,null,null],"main":[21.0,null,null,138,null,null]},
+  "2026-11-26T16":{"ecmwf":[16.0,null,null,128,null,null],"gfs":[16.0,null,null,134,null,null],"main":[18.0,null,null,132,null,null]},
+  "2026-11-26T17":{"ecmwf":[14.0,null,null,132,null,null],"gfs":[15.0,null,null,142,null,null],"main":[19.0,null,null,137,null,null]},
   "2026-11-26T18":{"ecmwf":[14.0,null,null,138,null,null],"gfs":[15.0,null,null,142,null,null],"main":[19.0,null,null,140,null,null]},
-  "2026-11-26T19":{"ecmwf":[12.0,null,null,142,null,null],"gfs":[14.0,null,null,146,null,null],"main":[18.0,null,null,140,null,null]}
+  "2026-11-26T19":{"ecmwf":[13.0,null,null,144,null,null],"gfs":[14.0,null,null,146,null,null],"main":[18.0,null,null,140,null,null]}
  },
  "94580":{
   "2026-11-12T04":{"ecmwf":[2.0,null,null,153,null,null],"gfs":[5.0,null,null,266,null,null],"main":[8.0,null,null,192,null,null]},
@@ -6269,12 +6281,12 @@
   "2026-11-26T11":{"ecmwf":[15.0,null,null,116,null,null],"gfs":[17.0,null,null,123,null,null],"main":[16.0,null,null,123,null,null]},
   "2026-11-26T12":{"ecmwf":[16.0,null,null,118,null,null],"gfs":[16.0,null,null,123,null,null],"main":[19.0,null,null,121,null,null]},
   "2026-11-26T13":{"ecmwf":[16.0,null,null,119,null,null],"gfs":[17.0,null,null,129,null,null],"main":[20.0,null,null,124,null,null]},
-  "2026-11-26T14":{"ecmwf":[17.0,null,null,120,null,null],"gfs":[19.0,null,null,133,null,null],"main":[19.0,null,null,125,null,null]},
-  "2026-11-26T15":{"ecmwf":[17.0,null,null,120,null,null],"gfs":[18.0,null,null,135,null,null],"main":[19.0,null,null,127,null,null]},
-  "2026-11-26T16":{"ecmwf":[17.0,null,null,122,null,null],"gfs":[19.0,null,null,136,null,null],"main":[18.0,null,null,130,null,null]},
-  "2026-11-26T17":{"ecmwf":[16.0,null,null,125,null,null],"gfs":[17.0,null,null,146,null,null],"main":[18.0,null,null,139,null,null]},
-  "2026-11-26T18":{"ecmwf":[14.0,null,null,129,null,null],"gfs":[16.0,null,null,143,null,null],"main":[17.0,null,null,141,null,null]},
-  "2026-11-26T19":{"ecmwf":[13.0,null,null,135,null,null],"gfs":[14.0,null,null,160,null,null],"main":[17.0,null,null,150,null,null]}
+  "2026-11-26T14":{"ecmwf":[16.0,null,null,118,null,null],"gfs":[19.0,null,null,133,null,null],"main":[19.0,null,null,125,null,null]},
+  "2026-11-26T15":{"ecmwf":[16.0,null,null,117,null,null],"gfs":[18.0,null,null,135,null,null],"main":[19.0,null,null,127,null,null]},
+  "2026-11-26T16":{"ecmwf":[15.0,null,null,117,null,null],"gfs":[19.0,null,null,136,null,null],"main":[18.0,null,null,130,null,null]},
+  "2026-11-26T17":{"ecmwf":[14.0,null,null,120,null,null],"gfs":[17.0,null,null,146,null,null],"main":[18.0,null,null,139,null,null]},
+  "2026-11-26T18":{"ecmwf":[14.0,null,null,127,null,null],"gfs":[16.0,null,null,143,null,null],"main":[17.0,null,null,141,null,null]},
+  "2026-11-26T19":{"ecmwf":[13.0,null,null,134,null,null],"gfs":[14.0,null,null,160,null,null],"main":[17.0,null,null,150,null,null]}
  },
  "94592":{
   "2026-11-12T04":{"ecmwf":[8.0,null,null,254,null,null],"gfs":[4.0,null,null,280,null,null],"main":[9.0,null,null,244,null,null]},
@@ -6508,15 +6520,15 @@
   "2026-11-26T08":{"ecmwf":[10.0,null,null,152,null,null],"gfs":[9.0,null,null,162,null,null],"main":[14.0,null,null,137,null,null]},
   "2026-11-26T09":{"ecmwf":[12.0,null,null,145,null,null],"gfs":[10.0,null,null,142,null,null],"main":[14.0,null,null,130,null,null]},
   "2026-11-26T10":{"ecmwf":[14.0,null,null,139,null,null],"gfs":[11.0,null,null,125,null,null],"main":[14.0,null,null,137,null,null]},
-  "2026-11-26T11":{"ecmwf":[16.0,null,null,136,null,null],"gfs":[12.0,null,null,121,null,null],"main":[16.0,null,null,136,null,null]},
+  "2026-11-26T11":{"ecmwf":[16.0,null,null,137,null,null],"gfs":[12.0,null,null,121,null,null],"main":[16.0,null,null,136,null,null]},
   "2026-11-26T12":{"ecmwf":[17.0,null,null,135,null,null],"gfs":[12.0,null,null,117,null,null],"main":[18.0,null,null,135,null,null]},
   "2026-11-26T13":{"ecmwf":[19.0,null,null,134,null,null],"gfs":[12.0,null,null,127,null,null],"main":[19.0,null,null,134,null,null]},
   "2026-11-26T14":{"ecmwf":[19.0,null,null,135,null,null],"gfs":[13.0,null,null,130,null,null],"main":[19.0,null,null,133,null,null]},
-  "2026-11-26T15":{"ecmwf":[19.0,null,null,137,null,null],"gfs":[13.0,null,null,130,null,null],"main":[19.0,null,null,131,null,null]},
-  "2026-11-26T16":{"ecmwf":[19.0,null,null,139,null,null],"gfs":[13.0,null,null,137,null,null],"main":[18.0,null,null,142,null,null]},
-  "2026-11-26T17":{"ecmwf":[17.0,null,null,144,null,null],"gfs":[12.0,null,null,150,null,null],"main":[18.0,null,null,147,null,null]},
-  "2026-11-26T18":{"ecmwf":[16.0,null,null,151,null,null],"gfs":[10.0,null,null,155,null,null],"main":[17.0,null,null,151,null,null]},
-  "2026-11-26T19":{"ecmwf":[14.0,null,null,157,null,null],"gfs":[8.0,null,null,180,null,null],"main":[16.0,null,null,157,null,null]}
+  "2026-11-26T15":{"ecmwf":[18.0,null,null,138,null,null],"gfs":[13.0,null,null,130,null,null],"main":[19.0,null,null,131,null,null]},
+  "2026-11-26T16":{"ecmwf":[18.0,null,null,141,null,null],"gfs":[13.0,null,null,137,null,null],"main":[18.0,null,null,142,null,null]},
+  "2026-11-26T17":{"ecmwf":[17.0,null,null,145,null,null],"gfs":[12.0,null,null,150,null,null],"main":[18.0,null,null,147,null,null]},
+  "2026-11-26T18":{"ecmwf":[16.0,null,null,152,null,null],"gfs":[10.0,null,null,155,null,null],"main":[17.0,null,null,151,null,null]},
+  "2026-11-26T19":{"ecmwf":[15.0,null,null,157,null,null],"gfs":[8.0,null,null,180,null,null],"main":[16.0,null,null,157,null,null]}
  },
  "94596":{
   "2026-11-12T04":{"ecmwf":[6.0,null,null,336,null,null],"gfs":[5.0,null,null,234,null,null],"main":[9.0,null,null,335,null,null]},
@@ -6751,14 +6763,14 @@
   "2026-11-26T09":{"ecmwf":[11.0,null,null,131,null,null],"gfs":[14.0,null,null,130,null,null],"main":[13.0,null,null,129,null,null]},
   "2026-11-26T10":{"ecmwf":[12.0,null,null,129,null,null],"gfs":[14.0,null,null,134,null,null],"main":[14.0,null,null,135,null,null]},
   "2026-11-26T11":{"ecmwf":[14.0,null,null,130,null,null],"gfs":[16.0,null,null,136,null,null],"main":[14.0,null,null,137,null,null]},
-  "2026-11-26T12":{"ecmwf":[14.0,null,null,131,null,null],"gfs":[17.0,null,null,139,null,null],"main":[16.0,null,null,135,null,null]},
+  "2026-11-26T12":{"ecmwf":[14.0,null,null,130,null,null],"gfs":[17.0,null,null,139,null,null],"main":[16.0,null,null,135,null,null]},
   "2026-11-26T13":{"ecmwf":[15.0,null,null,131,null,null],"gfs":[18.0,null,null,146,null,null],"main":[16.0,null,null,140,null,null]},
-  "2026-11-26T14":{"ecmwf":[15.0,null,null,132,null,null],"gfs":[18.0,null,null,145,null,null],"main":[15.0,null,null,147,null,null]},
-  "2026-11-26T15":{"ecmwf":[15.0,null,null,132,null,null],"gfs":[18.0,null,null,140,null,null],"main":[16.0,null,null,140,null,null]},
-  "2026-11-26T16":{"ecmwf":[14.0,null,null,134,null,null],"gfs":[18.0,null,null,141,null,null],"main":[17.0,null,null,146,null,null]},
-  "2026-11-26T17":{"ecmwf":[13.0,null,null,137,null,null],"gfs":[16.0,null,null,140,null,null],"main":[18.0,null,null,148,null,null]},
-  "2026-11-26T18":{"ecmwf":[10.0,null,null,145,null,null],"gfs":[16.0,null,null,141,null,null],"main":[17.0,null,null,147,null,null]},
-  "2026-11-26T19":{"ecmwf":[8.0,null,null,151,null,null],"gfs":[16.0,null,null,121,null,null],"main":[14.0,null,null,149,null,null]}
+  "2026-11-26T14":{"ecmwf":[15.0,null,null,133,null,null],"gfs":[18.0,null,null,145,null,null],"main":[15.0,null,null,147,null,null]},
+  "2026-11-26T15":{"ecmwf":[16.0,null,null,136,null,null],"gfs":[18.0,null,null,140,null,null],"main":[16.0,null,null,140,null,null]},
+  "2026-11-26T16":{"ecmwf":[15.0,null,null,140,null,null],"gfs":[18.0,null,null,141,null,null],"main":[17.0,null,null,146,null,null]},
+  "2026-11-26T17":{"ecmwf":[14.0,null,null,145,null,null],"gfs":[16.0,null,null,140,null,null],"main":[18.0,null,null,148,null,null]},
+  "2026-11-26T18":{"ecmwf":[12.0,null,null,150,null,null],"gfs":[16.0,null,null,141,null,null],"main":[17.0,null,null,147,null,null]},
+  "2026-11-26T19":{"ecmwf":[10.0,null,null,157,null,null],"gfs":[16.0,null,null,121,null,null],"main":[14.0,null,null,149,null,null]}
  },
  "94599":{
   "2026-11-12T04":{"ecmwf":[6.0,null,null,336,null,null],"gfs":[5.0,null,null,297,null,null],"main":[4.0,null,null,344,null,null]},
@@ -6993,14 +7005,14 @@
   "2026-11-26T09":{"ecmwf":[11.0,null,null,131,null,null],"gfs":[10.0,null,null,126,null,null],"main":[14.0,null,null,133,null,null]},
   "2026-11-26T10":{"ecmwf":[12.0,null,null,129,null,null],"gfs":[11.0,null,null,120,null,null],"main":[15.0,null,null,138,null,null]},
   "2026-11-26T11":{"ecmwf":[14.0,null,null,130,null,null],"gfs":[12.0,null,null,122,null,null],"main":[15.0,null,null,140,null,null]},
-  "2026-11-26T12":{"ecmwf":[14.0,null,null,131,null,null],"gfs":[12.0,null,null,124,null,null],"main":[17.0,null,null,135,null,null]},
+  "2026-11-26T12":{"ecmwf":[14.0,null,null,130,null,null],"gfs":[12.0,null,null,124,null,null],"main":[17.0,null,null,135,null,null]},
   "2026-11-26T13":{"ecmwf":[15.0,null,null,131,null,null],"gfs":[13.0,null,null,134,null,null],"main":[17.0,null,null,138,null,null]},
-  "2026-11-26T14":{"ecmwf":[15.0,null,null,132,null,null],"gfs":[12.0,null,null,137,null,null],"main":[16.0,null,null,141,null,null]},
-  "2026-11-26T15":{"ecmwf":[15.0,null,null,132,null,null],"gfs":[12.0,null,null,136,null,null],"main":[16.0,null,null,140,null,null]},
-  "2026-11-26T16":{"ecmwf":[14.0,null,null,134,null,null],"gfs":[11.0,null,null,142,null,null],"main":[18.0,null,null,148,null,null]},
-  "2026-11-26T17":{"ecmwf":[13.0,null,null,137,null,null],"gfs":[9.0,null,null,154,null,null],"main":[18.0,null,null,147,null,null]},
-  "2026-11-26T18":{"ecmwf":[10.0,null,null,145,null,null],"gfs":[8.0,null,null,160,null,null],"main":[17.0,null,null,148,null,null]},
-  "2026-11-26T19":{"ecmwf":[8.0,null,null,151,null,null],"gfs":[6.0,null,null,153,null,null],"main":[16.0,null,null,148,null,null]}
+  "2026-11-26T14":{"ecmwf":[15.0,null,null,133,null,null],"gfs":[12.0,null,null,137,null,null],"main":[16.0,null,null,141,null,null]},
+  "2026-11-26T15":{"ecmwf":[16.0,null,null,136,null,null],"gfs":[12.0,null,null,136,null,null],"main":[16.0,null,null,140,null,null]},
+  "2026-11-26T16":{"ecmwf":[15.0,null,null,140,null,null],"gfs":[11.0,null,null,142,null,null],"main":[18.0,null,null,148,null,null]},
+  "2026-11-26T17":{"ecmwf":[14.0,null,null,145,null,null],"gfs":[9.0,null,null,154,null,null],"main":[18.0,null,null,147,null,null]},
+  "2026-11-26T18":{"ecmwf":[12.0,null,null,150,null,null],"gfs":[8.0,null,null,160,null,null],"main":[17.0,null,null,148,null,null]},
+  "2026-11-26T19":{"ecmwf":[10.0,null,null,157,null,null],"gfs":[6.0,null,null,153,null,null],"main":[16.0,null,null,148,null,null]}
  },
  "94767":{
   "2026-11-12T04":{"ecmwf":[12.0,null,null,166,null,null],"gfs":[24.0,null,null,167,null,null],"main":[16.0,null,null,166,null,null]},
@@ -7237,12 +7249,12 @@
   "2026-11-26T11":{"ecmwf":[9.0,null,null,15,null,null],"gfs":[18.0,null,null,67,null,null],"main":[10.0,null,null,59,null,null]},
   "2026-11-26T12":{"ecmwf":[9.0,null,null,24,null,null],"gfs":[16.0,null,null,73,null,null],"main":[13.0,null,null,75,null,null]},
   "2026-11-26T13":{"ecmwf":[9.0,null,null,35,null,null],"gfs":[19.0,null,null,74,null,null],"main":[14.0,null,null,81,null,null]},
-  "2026-11-26T14":{"ecmwf":[10.0,null,null,45,null,null],"gfs":[18.0,null,null,70,null,null],"main":[14.0,null,null,82,null,null]},
-  "2026-11-26T15":{"ecmwf":[11.0,null,null,54,null,null],"gfs":[22.0,null,null,70,null,null],"main":[15.0,null,null,73,null,null]},
-  "2026-11-26T16":{"ecmwf":[12.0,null,null,60,null,null],"gfs":[22.0,null,null,69,null,null],"main":[14.0,null,null,69,null,null]},
-  "2026-11-26T17":{"ecmwf":[11.0,null,null,65,null,null],"gfs":[19.0,null,null,62,null,null],"main":[16.0,null,null,66,null,null]},
-  "2026-11-26T18":{"ecmwf":[10.0,null,null,70,null,null],"gfs":[18.0,null,null,58,null,null],"main":[14.0,null,null,60,null,null]},
-  "2026-11-26T19":{"ecmwf":[9.0,null,null,72,null,null],"gfs":[16.0,null,null,52,null,null],"main":[11.0,null,null,47,null,null]}
+  "2026-11-26T14":{"ecmwf":[10.0,null,null,48,null,null],"gfs":[18.0,null,null,70,null,null],"main":[14.0,null,null,82,null,null]},
+  "2026-11-26T15":{"ecmwf":[11.0,null,null,58,null,null],"gfs":[22.0,null,null,70,null,null],"main":[15.0,null,null,73,null,null]},
+  "2026-11-26T16":{"ecmwf":[12.0,null,null,65,null,null],"gfs":[22.0,null,null,69,null,null],"main":[14.0,null,null,69,null,null]},
+  "2026-11-26T17":{"ecmwf":[12.0,null,null,68,null,null],"gfs":[19.0,null,null,62,null,null],"main":[16.0,null,null,66,null,null]},
+  "2026-11-26T18":{"ecmwf":[11.0,null,null,69,null,null],"gfs":[18.0,null,null,58,null,null],"main":[14.0,null,null,60,null,null]},
+  "2026-11-26T19":{"ecmwf":[10.0,null,null,68,null,null],"gfs":[16.0,null,null,52,null,null],"main":[11.0,null,null,47,null,null]}
  },
  "95766":{
   "2026-11-12T04":{"ecmwf":[15.0,null,null,173,null,null],"gfs":[21.0,null,null,167,null,null],"main":[14.0,null,null,168,null,null]},
@@ -7479,14 +7491,30 @@
   "2026-11-26T11":{"ecmwf":[11.0,null,null,55,null,null],"gfs":[14.0,null,null,67,null,null],"main":[10.0,null,null,58,null,null]},
   "2026-11-26T12":{"ecmwf":[11.0,null,null,66,null,null],"gfs":[12.0,null,null,73,null,null],"main":[11.0,null,null,72,null,null]},
   "2026-11-26T13":{"ecmwf":[12.0,null,null,72,null,null],"gfs":[15.0,null,null,70,null,null],"main":[13.0,null,null,79,null,null]},
-  "2026-11-26T14":{"ecmwf":[12.0,null,null,72,null,null],"gfs":[14.0,null,null,66,null,null],"main":[14.0,null,null,78,null,null]},
-  "2026-11-26T15":{"ecmwf":[13.0,null,null,69,null,null],"gfs":[18.0,null,null,67,null,null],"main":[13.0,null,null,74,null,null]},
-  "2026-11-26T16":{"ecmwf":[13.0,null,null,66,null,null],"gfs":[18.0,null,null,67,null,null],"main":[14.0,null,null,69,null,null]},
-  "2026-11-26T17":{"ecmwf":[11.0,null,null,59,null,null],"gfs":[15.0,null,null,63,null,null],"main":[15.0,null,null,66,null,null]},
-  "2026-11-26T18":{"ecmwf":[9.0,null,null,50,null,null],"gfs":[14.0,null,null,60,null,null],"main":[14.0,null,null,62,null,null]},
-  "2026-11-26T19":{"ecmwf":[8.0,null,null,37,null,null],"gfs":[13.0,null,null,54,null,null],"main":[10.0,null,null,46,null,null]}
+  "2026-11-26T14":{"ecmwf":[13.0,null,null,74,null,null],"gfs":[14.0,null,null,66,null,null],"main":[14.0,null,null,78,null,null]},
+  "2026-11-26T15":{"ecmwf":[14.0,null,null,70,null,null],"gfs":[18.0,null,null,67,null,null],"main":[13.0,null,null,74,null,null]},
+  "2026-11-26T16":{"ecmwf":[14.0,null,null,67,null,null],"gfs":[18.0,null,null,67,null,null],"main":[14.0,null,null,69,null,null]},
+  "2026-11-26T17":{"ecmwf":[13.0,null,null,60,null,null],"gfs":[15.0,null,null,63,null,null],"main":[15.0,null,null,66,null,null]},
+  "2026-11-26T18":{"ecmwf":[12.0,null,null,47,null,null],"gfs":[14.0,null,null,60,null,null],"main":[14.0,null,null,62,null,null]},
+  "2026-11-26T19":{"ecmwf":[11.0,null,null,38,null,null],"gfs":[13.0,null,null,54,null,null],"main":[10.0,null,null,46,null,null]}
  }
 },
 "windobs":{
+ "94569":{
+ },
+ "94570":{
+ },
+ "94580":{
+ },
+ "94592":{
+ },
+ "94596":{
+ },
+ "94599":{
+ },
+ "94767":{
+ },
+ "95766":{
+ }
 }
 }
