@@ -724,7 +724,8 @@
   }
 
   // Longboard pick: the shaka goes everywhere the spot's name does.
-  const logMark = (s) => (s.log ? '<span class="shaka" role="img" aria-label="Longboard pick">🤙</span>' : '');
+  // ⁠ (word joiner) keeps the 🤙 on the same line as the name's last word when a name wraps
+  const logMark = (s) => (s.log ? '⁠<span class="shaka" role="img" aria-label="Longboard pick">🤙</span>' : '');
 
   // One Top 5 row: rank badge in the rating colour · spot + rating · surf · wind · best hour.
   function t5Row({ sp, m }, i) {

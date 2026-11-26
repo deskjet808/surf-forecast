@@ -914,12 +914,13 @@ h1, h2, h3 { margin: 0; font-weight: 500; }
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent);
 }
 .t5-row:first-child .t5-rank { color: var(--bg); background: var(--c); box-shadow: none; }
-.t5-row .name { display: grid; grid-template-columns: minmax(0, max-content) auto auto 1fr; align-items: center; column-gap: 0; font-size: 15.5px; }
+/* Block, not grid: a long name wraps to a second line and the 🤙 / star follow its last word. */
+.t5-row .name { display: block; font-size: 15.5px; line-height: 1.15; }
 .t5-row .name .shaka, .t5-row .name .t5-fav { margin-left: 4px; }
 .t5-row .name .shaka { font-size: 12px; }
-.t5-row .nm { grid-column: 1; }
+.t5-row .nm { display: inline; white-space: normal; overflow: visible; overflow-wrap: break-word; }
 .t5-fav { width: 11px; height: 11px; fill: var(--r2); }
-.t5-rate { grid-column: 1 / -1; margin-top: 2px; font: italic 400 15px/1 var(--serif); color: var(--c); letter-spacing: 0; }
+.t5-rate { display: block; margin-top: 3px; font: italic 400 15px/1 var(--serif); color: var(--c); letter-spacing: 0; }
 .t5-surf, .t5-wind { display: flex; flex-direction: column; gap: 4px; min-width: 0; white-space: nowrap; }
 .t5-surf { font: 500 14.5px/1 var(--mono); letter-spacing: -0.03em; }
 .t5-wind b { font: 500 12.5px/1 var(--sans); overflow: hidden; text-overflow: ellipsis; }
